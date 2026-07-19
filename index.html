@@ -1,0 +1,2494 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Business Manager | SaaS Platform</title>
+    
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js สำหรับทำกราฟ Pie, Bar, Line -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Tailwind Configuration & Custom Design System -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            900: '#1e3a8a',
+                        },
+                        glass: {
+                            light: 'rgba(255, 255, 255, 0.7)',
+                            dark: 'rgba(30, 41, 59, 0.7)',
+                            borderLight: 'rgba(255, 255, 255, 0.3)',
+                            borderDark: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.4s ease-out forwards',
+                        'slide-up': 'slideUp 0.5s ease-out forwards',
+                        'spin-slow': 'spin 3s linear infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom CSS: Scrollbar, Animations & Glassmorphism Utilities -->
+    <style>
+        /* ========================================== */
+        /* CHAT & TYPING ANIMATIONS                   */
+        /* ========================================== */
+        
+        /* Message Bubble Pop-in */
+        .msg-pop { animation: msgPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes msgPop {
+            0% { opacity: 0; transform: translateY(10px) scale(0.95); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Typing Dots Animation */
+        .typing-indicator { display: flex; align-items: center; gap: 4px; padding: 4px 8px; }
+        .typing-dot {
+            width: 6px; height: 6px;
+            background-color: #94a3b8;
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite ease-in-out both;
+        }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typingBounce {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Thinking Glow Element */
+        .thinking-glow {
+            box-shadow: 0 0 15px 2px rgba(139, 92, 246, 0.4);
+            animation: pulseGlow 2s infinite alternate;
+        }
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 15px 2px rgba(139, 92, 246, 0.2); }
+            100% { box-shadow: 0 0 20px 5px rgba(139, 92, 246, 0.6); }
+        }
+
+        /* Base styles & Smooth scrolling */
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.5); border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: rgba(75, 85, 99, 0.8); }
+
+        /* Animated Background Gradients for Glassmorphism Context */
+        .bg-mesh-light {
+            background-color: #f3f4f6;
+            background-image: 
+                radial-gradient(at 40% 20%, hsla(215,98%,61%,0.15) 0px, transparent 50%),
+                radial-gradient(at 80% 0%, hsla(189,100%,56%,0.15) 0px, transparent 50%),
+                radial-gradient(at 0% 50%, hsla(355,100%,93%,0.1) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+        
+        .dark .bg-mesh-dark {
+            background-color: #0f172a;
+            background-image: 
+                radial-gradient(at 40% 20%, hsla(215,98%,61%,0.15) 0px, transparent 50%),
+                radial-gradient(at 80% 0%, hsla(289,100%,56%,0.15) 0px, transparent 50%),
+                radial-gradient(at 0% 50%, hsla(255,100%,93%,0.05) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        /* Core Glass Card System */
+        .glass-card {
+            background: var(--tw-glass-light, rgba(255, 255, 255, 0.75));
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--tw-glass-border-light, rgba(255, 255, 255, 0.4));
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border-radius: 1rem;
+        }
+
+        .dark .glass-card {
+            background: var(--tw-glass-dark, rgba(30, 41, 59, 0.65));
+            border: 1px solid var(--tw-glass-border-dark, rgba(255, 255, 255, 0.08));
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Progress Ring Circle */
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.5s ease-in-out;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        /* Skeleton Loading Animation */
+        .skeleton {
+            background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+        }
+        .dark .skeleton {
+            background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+            background-size: 200% 100%;
+        }
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
+        /* ========================================== */
+        /* AI AVATAR & 2D ANIMATION SYSTEM            */
+        /* ========================================== */
+        
+        /* 1. Breathing / Idle (หายใจปกติ) */
+        .ai-idle { animation: aiBreathing 4s ease-in-out infinite; }
+        @keyframes aiBreathing {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        /* 2. Blinking (กระพริบตา - ซ้อนทับกับท่าอื่นได้) */
+        .ai-eye-blink { animation: eyeBlink 4s infinite; transform-origin: center; }
+        @keyframes eyeBlink {
+            0%, 95%, 100% { transform: scaleY(1); }
+            97% { transform: scaleY(0.1); }
+        }
+
+        /* 3. Thinking (กำลังคิด - ลอยตัวและเอียงเล็กน้อย) */
+        .ai-thinking { animation: aiThinking 3s ease-in-out infinite; }
+        @keyframes aiThinking {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-5px) rotate(3deg); }
+            75% { transform: translateY(-5px) rotate(-3deg); }
+        }
+
+        /* 4. Working / Typing (กำลังพิมพ์งาน - ขยับตัวเร็วๆ) */
+        .ai-working { animation: aiWorking 0.5s ease-in-out infinite; }
+        @keyframes aiWorking {
+            0%, 100% { transform: translateY(0) translateX(0); }
+            25% { transform: translateY(-2px) translateX(-1px); }
+            75% { transform: translateY(1px) translateX(1px); }
+        }
+
+        /* 5. Sleeping (พักผ่อน - ลดแสงลงและหายใจลึก) */
+        .ai-sleeping { 
+            animation: aiSleeping 6s ease-in-out infinite;
+            filter: brightness(0.6) saturate(0.5);
+        }
+        @keyframes aiSleeping {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-3px) scale(0.98); }
+        }
+
+        /* Mood Indicators */
+        .mood-excellent { text-shadow: 0 0 10px rgba(52, 211, 153, 0.8); color: #34d399; }
+        .mood-good { text-shadow: 0 0 10px rgba(96, 165, 250, 0.8); color: #60a5fa; }
+        .mood-tired { text-shadow: 0 0 10px rgba(248, 113, 113, 0.8); color: #f87171; }
+
+        /* Energy Progress Bar Override */
+        .energy-bar-fill { transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
+        /* ========================================== */
+        /* KANBAN DRAG & DROP & GANTT CHART CSS       */
+        /* ========================================== */
+        
+        /* Kanban Drag State */
+        .kanban-ghost { opacity: 0.4; border: 2px dashed #94a3b8; background: transparent; }
+        .kanban-drag-over { background-color: rgba(59, 130, 246, 0.1); border: 2px dashed #3b82f6; }
+        
+        /* Gantt Chart Grid & Bars */
+        .gantt-container {
+            background-image: linear-gradient(to right, rgba(203, 213, 225, 0.2) 1px, transparent 1px);
+            background-size: 50px 100%; /* Grid size */
+        }
+        .dark .gantt-container {
+            background-image: linear-gradient(to right, rgba(71, 85, 105, 0.3) 1px, transparent 1px);
+        }
+        
+        .gantt-bar {
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+        .gantt-bar:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.15); }
+        
+        /* Progress Fill inside Gantt Bar */
+        .gantt-progress {
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            background: rgba(255,255,255,0.25);
+            border-right: 2px solid rgba(255,255,255,0.5);
+            z-index: 1;
+        }
+        .dark .gantt-progress { background: rgba(0,0,0,0.2); border-right: 2px solid rgba(255,255,255,0.3); }
+        
+        /* Critical Path (Glowing Red) */
+        .gantt-critical {
+            border: 2px solid #ef4444;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+            animation: criticalPulse 2s infinite;
+        }
+        @keyframes criticalPulse {
+            0% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.4); }
+            50% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.8); }
+            100% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.4); }
+        }
+
+        /* Milestone (Diamond Shape) */
+        .gantt-milestone {
+            width: 16px; height: 16px;
+            background-color: #f59e0b;
+            transform: rotate(45deg);
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        .dark .gantt-milestone { border-color: #1e293b; }
+        
+        /* Dependency Lines (SVG overrides) */
+        .dependency-line {
+            stroke: #94a3b8; stroke-width: 2; stroke-dasharray: 4; fill: none;
+        }
+        .dark .dependency-line { stroke: #64748b; }
+        .dependency-arrow { fill: #94a3b8; }
+        .dark .dependency-arrow { fill: #64748b; }
+
+</head>
+<body class="text-slate-800 dark:text-slate-200 transition-colors duration-300 bg-mesh-light dark:bg-mesh-dark min-h-screen overflow-hidden flex">
+
+    <!-- Global Loading Overlay -->
+    <div id="global-loader" class="fixed inset-0 z-[100] flex items-center justify-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm transition-opacity duration-300">
+        <div class="flex flex-col items-center">
+            <i class="fa-solid fa-circle-notch fa-spin text-4xl text-brand-500 mb-4"></i>
+            <span class="text-sm font-semibold tracking-wider animate-pulse">SYSTEM INITIALIZING...</span>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 1. SIDEBAR NAVIGATION -->
+    <!-- ========================================== -->
+    <aside id="sidebar" class="glass-card w-64 h-[calc(100vh-32px)] m-4 hidden md:flex flex-col flex-shrink-0 z-40 fixed md:relative transition-transform duration-300 transform -translate-x-full md:translate-x-0">
+        <!-- Logo -->
+        <div class="h-20 flex items-center justify-center border-b border-white/20 dark:border-slate-700/50">
+            <i class="fa-solid fa-microchip text-brand-500 text-2xl mr-3"></i>
+            <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-500 to-purple-500">AI Biz Manager</h1>
+        </div>
+        
+        <!-- Nav Links -->
+        <div class="flex-1 overflow-y-auto py-4 px-3 space-y-1" id="nav-container">
+            <!-- Navigation items generated dynamically via JS for active state management -->
+            <button onclick="navigate('dashboard')" class="nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all hover:bg-white/40 dark:hover:bg-slate-800/50 text-brand-600 dark:text-brand-400 bg-white/50 dark:bg-slate-800/80 shadow-sm" data-target="dashboard">
+                <i class="fa-solid fa-chart-pie w-6"></i> Dashboard
+            </button>
+            <button onclick="navigate('projects')" class="nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all hover:bg-white/40 dark:hover:bg-slate-800/50 opacity-80" data-target="projects">
+                <i class="fa-solid fa-briefcase w-6"></i> Projects
+            </button>
+            <button onclick="navigate('tasks')" class="nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all hover:bg-white/40 dark:hover:bg-slate-800/50 opacity-80" data-target="tasks">
+                <i class="fa-solid fa-list-check w-6"></i> Tasks
+            </button>
+            <button onclick="navigate('kanban')" class="nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all hover:bg-white/40 dark:hover:bg-slate-800/50 opacity-80" data-target="kanban">
+                <i class="fa-brands fa-trello w-6"></i> Kanban Board
+            </button>
+            <button onclick="navigate('workflow')" class="nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all hover:bg-white/40 dark:hover:bg-slate-800/50 opacity-80" data-target="workflow">
+                <i class="fa-solid fa-project-diagram w-6"></i> Workflow
+            </button>
+            
+            <div class="pt-4 pb-2">
+                <p class="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider">AI Operations</p>
+            </div>
+            
+            <button onclick="navigate('ai_team')" class="nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all hover:bg-white/40 dark:hover:bg-slate-800/50 opacity-80" data-target="ai_team">
+                <i class="fa-solid fa-robot w-6"></i> AI Team
+            </button>
+            <button onclick="navigate('chat')" class="nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all hover:bg-white/40 dark:hover:bg-slate-800/50 opacity-80" data-target="chat">
+                <i class="fa-solid fa-comments w-6"></i> AI Chat
+            </button>
+            <button onclick="navigate('prompt')" class="nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all hover:bg-white/40 dark:hover:bg-slate-800/50 opacity-80" data-target="prompt">
+                <i class="fa-solid fa-terminal w-6"></i> Prompt Library
+            </button>
+            
+            <div class="pt-4 pb-2">
+                <p class="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider">System</p>
+            </div>
+            
+            <button onclick="navigate('knowledge')" class="nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all hover:bg-white/40 dark:hover:bg-slate-800/50 opacity-80" data-target="knowledge">
+                <i class="fa-solid fa-book-atlas w-6"></i> Knowledge Base
+            </button>
+            <button onclick="navigate('reports')" class="nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all hover:bg-white/40 dark:hover:bg-slate-800/50 opacity-80" data-target="reports">
+                <i class="fa-solid fa-chart-line w-6"></i> Reports
+            </button>
+            <button onclick="navigate('settings')" class="nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all hover:bg-white/40 dark:hover:bg-slate-800/50 opacity-80" data-target="settings">
+                <i class="fa-solid fa-gear w-6"></i> Settings
+            </button>
+        </div>
+
+        <!-- Logout Section -->
+        <div class="p-4 border-t border-white/20 dark:border-slate-700/50">
+            <button onclick="logout()" class="w-full flex items-center justify-center px-4 py-2 bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 rounded-xl transition-colors text-sm font-medium">
+                <i class="fa-solid fa-arrow-right-from-bracket mr-2"></i> Logout
+            </button>
+        </div>
+    </aside>
+
+    <!-- ========================================== -->
+    <!-- 2. MAIN CONTENT AREA (Header + Viewport) -->
+    <!-- ========================================== -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        
+        <!-- Mobile Sidebar Overlay -->
+        <div id="mobile-overlay" class="fixed inset-0 bg-slate-900/50 z-30 hidden lg:hidden backdrop-blur-sm transition-opacity opacity-0" onclick="toggleSidebar()"></div>
+
+        <!-- Top Header -->
+        <header class="h-20 glass-card mx-4 mt-4 mb-2 flex items-center justify-between px-6 z-20">
+            <div class="flex items-center">
+                <button onclick="toggleSidebar()" class="md:hidden mr-4 text-slate-500 hover:text-brand-500 transition-colors">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                
+                <!-- Global Search -->
+                <div class="relative hidden sm:block w-64 md:w-96">
+                    <i class="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="global-search-input" placeholder="Search tasks, projects, knowledge..." class="w-full bg-white/50 dark:bg-slate-800/50 border border-white/20 dark:border-slate-600 rounded-full py-2 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-brand-500/50 text-sm placeholder-slate-400 transition-all backdrop-blur-sm" onkeyup="handleGlobalSearch(event)">
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <!-- Theme Toggle -->
+                <button onclick="toggleDarkMode()" class="w-10 h-10 rounded-full flex items-center justify-center bg-white/50 dark:bg-slate-800/50 hover:bg-white/80 dark:hover:bg-slate-700/50 transition-colors shadow-sm">
+                    <i id="theme-icon" class="fa-solid fa-moon text-slate-600 dark:text-yellow-400"></i>
+                </button>
+
+                <!-- Calendar Shortcut -->
+                <button onclick="navigate('calendar')" class="w-10 h-10 rounded-full flex items-center justify-center bg-white/50 dark:bg-slate-800/50 hover:bg-white/80 dark:hover:bg-slate-700/50 transition-colors shadow-sm relative">
+                    <i class="fa-regular fa-calendar text-slate-600 dark:text-slate-300"></i>
+                </button>
+
+                <!-- Notifications -->
+                <button onclick="navigate('notifications')" class="w-10 h-10 rounded-full flex items-center justify-center bg-white/50 dark:bg-slate-800/50 hover:bg-white/80 dark:hover:bg-slate-700/50 transition-colors shadow-sm relative">
+                    <i class="fa-regular fa-bell text-slate-600 dark:text-slate-300"></i>
+                    <span id="notif-badge" class="absolute top-0 right-0 w-3 h-3 bg-red-500 border-2 border-white dark:border-slate-800 rounded-full hidden"></span>
+                </button>
+
+                <!-- User Profile -->
+                <div class="flex items-center pl-4 border-l border-white/20 dark:border-slate-700">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-400 to-purple-500 flex items-center justify-center text-white shadow-md">
+                        <i id="user-avatar-icon" class="fa-solid fa-user-tie"></i>
+                    </div>
+                    <div class="ml-3 hidden lg:block">
+                        <p id="user-display-name" class="text-sm font-semibold text-slate-800 dark:text-slate-200">Admin</p>
+                        <p id="user-display-role" class="text-xs text-slate-500 dark:text-slate-400">System Operator</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Viewport Container (Render specific module pages here) -->
+        <div id="app-viewport" class="flex-1 overflow-y-auto p-4 pt-2">
+            
+            <!-- ========================================== -->
+            <!-- VIEW: DASHBOARD (Main Landing) -->
+            <!-- ========================================== -->
+            <div id="view-dashboard" class="view-section animate-fade-in space-y-6">
+                <!-- Page Title -->
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold">Company Overview</h2>
+                        <p class="text-sm text-slate-500">Real-time SaaS operational metrics</p>
+                    </div>
+                    <button onclick="loadDashboardData()" class="px-4 py-2 bg-white/40 dark:bg-slate-800/50 hover:bg-brand-500 hover:text-white transition-all rounded-lg text-sm shadow-sm glass-card">
+                        <i class="fa-solid fa-rotate-right mr-2"></i> Refresh Data
+                    </button>
+                </div>
+
+                <!-- KPI Cards Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- KPI 1 -->
+                    <div class="glass-card p-5 relative overflow-hidden group">
+                        <div class="absolute -right-6 -top-6 w-24 h-24 bg-blue-500/10 rounded-full blur-xl group-hover:bg-blue-500/20 transition-all"></div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Total Projects</p>
+                                <h3 id="dash-kpi-projects" class="text-3xl font-bold mt-2">--</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 text-xl">
+                                <i class="fa-solid fa-briefcase"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex items-center text-xs">
+                            <span class="text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-md"><i class="fa-solid fa-arrow-up mr-1"></i>Active</span>
+                        </div>
+                    </div>
+                    
+                    <!-- KPI 2 -->
+                    <div class="glass-card p-5 relative overflow-hidden group">
+                        <div class="absolute -right-6 -top-6 w-24 h-24 bg-purple-500/10 rounded-full blur-xl group-hover:bg-purple-500/20 transition-all"></div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Pending Tasks</p>
+                                <h3 id="dash-kpi-tasks" class="text-3xl font-bold mt-2">--</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500 text-xl">
+                                <i class="fa-solid fa-list-check"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex items-center text-xs">
+                            <span class="text-amber-500 bg-amber-500/10 px-2 py-1 rounded-md">Needs Attention</span>
+                        </div>
+                    </div>
+
+                    <!-- KPI 3 -->
+                    <div class="glass-card p-5 relative overflow-hidden group">
+                        <div class="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/20 transition-all"></div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">AI Staff Active</p>
+                                <h3 id="dash-kpi-staff" class="text-3xl font-bold mt-2">--</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 text-xl">
+                                <i class="fa-solid fa-robot"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex items-center text-xs">
+                            <span class="text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-md">Operational</span>
+                        </div>
+                    </div>
+
+                    <!-- KPI 4 -->
+                    <div class="glass-card p-5 relative overflow-hidden group">
+                        <div class="absolute -right-6 -top-6 w-24 h-24 bg-rose-500/10 rounded-full blur-xl group-hover:bg-rose-500/20 transition-all"></div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">System Health</p>
+                                <h3 id="dash-kpi-health" class="text-3xl font-bold mt-2 text-emerald-500">100%</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-500 text-xl">
+                                <i class="fa-solid fa-heart-pulse"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex items-center text-xs">
+                            <span class="text-slate-500"><i class="fa-solid fa-check-circle mr-1"></i>All APIs connected</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Line Chart: Activity Trend -->
+                    <div class="glass-card p-5 lg:col-span-2">
+                        <h3 class="font-bold text-lg mb-4">Task Completion Trend</h3>
+                        <div class="h-64 relative w-full">
+                            <canvas id="dashboardLineChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Doughnut Chart: Workflow Status -->
+                    <div class="glass-card p-5 flex flex-col items-center justify-center relative">
+                        <h3 class="font-bold text-lg mb-4 self-start w-full">Workflow Status</h3>
+                        <div class="h-48 w-48 relative">
+                            <canvas id="dashboardPieChart"></canvas>
+                            <div class="absolute inset-0 flex items-center justify-center flex-col">
+                                <span class="text-2xl font-bold" id="chart-center-text">--%</span>
+                                <span class="text-xs text-slate-400">Done</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Section: AI Status & Today's Tasks -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    
+                    <!-- Today's Tasks -->
+                    <div class="glass-card p-5">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-lg"><i class="fa-solid fa-calendar-day mr-2 text-brand-500"></i>Today's High Priority</h3>
+                            <button onclick="navigate('tasks')" class="text-sm text-brand-500 hover:underline">View All</button>
+                        </div>
+                        <div id="dashboard-tasks-container" class="space-y-3">
+                            <!-- Tasks injected here via JS -->
+                            <div class="skeleton h-16 w-full rounded-xl"></div>
+                            <div class="skeleton h-16 w-full rounded-xl"></div>
+                        </div>
+                    </div>
+
+                    <!-- AI Team Status (Progress Rings) -->
+                    <div class="glass-card p-5">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-lg"><i class="fa-solid fa-network-wired mr-2 text-purple-500"></i>AI Team Workload</h3>
+                            <button onclick="navigate('ai_team')" class="text-sm text-brand-500 hover:underline">Manage Team</button>
+                        </div>
+                        <div id="dashboard-ai-container" class="space-y-4">
+                            <!-- Workloads injected here via JS -->
+                            <div class="skeleton h-12 w-full rounded-xl"></div>
+                            <div class="skeleton h-12 w-full rounded-xl"></div>
+                            <div class="skeleton h-12 w-full rounded-xl"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Activity (Timeline style mini) -->
+                <div class="glass-card p-5">
+                     <h3 class="font-bold text-lg mb-4">Recent Platform Activity</h3>
+                     <div class="relative border-l border-slate-200 dark:border-slate-700 ml-3 space-y-6" id="dashboard-activity-container">
+                         <!-- Activity items injected here -->
+                     </div>
+                </div>
+
+            </div> <!-- End Dashboard View -->
+            
+            <!-- ========================================== -->
+            <!-- VIEW: PROJECTS (จัดการโปรเจกต์) -->
+            <!-- ========================================== -->
+            <div id="view-projects" class="view-section hidden animate-fade-in space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold">จัดการโปรเจกต์</h2>
+                        <p class="text-sm text-slate-500">ควบคุมและติดตามความคืบหน้าของโครงการทั้งหมด</p>
+                    </div>
+                    <button onclick="openModal('projects', 'create')" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white transition-all rounded-lg text-sm shadow-lg shadow-brand-500/30 flex items-center">
+                        <i class="fa-solid fa-plus mr-2"></i> สร้างโปรเจกต์ใหม่
+                    </button>
+                </div>
+                
+                <div class="glass-card overflow-hidden">
+                    <div class="p-4 border-b border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center bg-white/30 dark:bg-slate-800/30">
+                        <div class="relative w-full max-w-xs">
+                            <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-sm"></i>
+                            <input type="text" id="search-projects" onkeyup="debounceSearch('projects')" placeholder="ค้นหาโปรเจกต์..." class="w-full bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg py-1.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/50">
+                        </div>
+                        <button onclick="fetchData('projects')" class="text-slate-500 hover:text-brand-500 p-2"><i class="fa-solid fa-rotate-right"></i></button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-xs uppercase text-slate-500 dark:text-slate-400 border-b border-slate-200/50 dark:border-slate-700/50">
+                                    <th class="px-6 py-4 font-semibold">รหัสโปรเจกต์</th>
+                                    <th class="px-6 py-4 font-semibold">ชื่อโปรเจกต์</th>
+                                    <th class="px-6 py-4 font-semibold">สถานะ</th>
+                                    <th class="px-6 py-4 font-semibold">ระยะเวลา</th>
+                                    <th class="px-6 py-4 font-semibold text-right">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body-projects" class="divide-y divide-slate-200/30 dark:divide-slate-700/30 text-sm">
+                                <!-- Data injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Pagination -->
+                    <div id="pagination-projects" class="p-4 border-t border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center text-sm">
+                        <!-- Pagination controls injected via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- VIEW: TASKS (รายการงานทั้งหมด) -->
+            <!-- ========================================== -->
+            <div id="view-tasks" class="view-section hidden animate-fade-in space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold">รายการงาน (Tasks)</h2>
+                        <p class="text-sm text-slate-500">มอบหมายและติดตามงานของทีมงานและ AI</p>
+                    </div>
+                    <button onclick="openModal('tasks', 'create')" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white transition-all rounded-lg text-sm shadow-lg shadow-brand-500/30 flex items-center">
+                        <i class="fa-solid fa-plus mr-2"></i> เพิ่มงานใหม่
+                    </button>
+                </div>
+                
+                <div class="glass-card overflow-hidden">
+                    <div class="p-4 border-b border-slate-200/50 dark:border-slate-700/50 flex flex-wrap gap-4 justify-between items-center bg-white/30 dark:bg-slate-800/30">
+                        <div class="relative w-full sm:w-auto min-w-[250px]">
+                            <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-sm"></i>
+                            <input type="text" id="search-tasks" onkeyup="debounceSearch('tasks')" placeholder="ค้นหางาน..." class="w-full bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg py-1.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/50">
+                        </div>
+                        <select id="filter-tasks-status" onchange="fetchData('tasks')" class="bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg py-1.5 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/50">
+                            <option value="">ทุกสถานะ</option>
+                            <option value="To Do">To Do (รอดำเนินการ)</option>
+                            <option value="In Progress">In Progress (กำลังทำ)</option>
+                            <option value="Done">Done (เสร็จสิ้น)</option>
+                        </select>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-xs uppercase text-slate-500 dark:text-slate-400 border-b border-slate-200/50 dark:border-slate-700/50">
+                                    <th class="px-6 py-4 font-semibold">ชื่องาน</th>
+                                    <th class="px-6 py-4 font-semibold">โปรเจกต์</th>
+                                    <th class="px-6 py-4 font-semibold">ผู้รับผิดชอบ</th>
+                                    <th class="px-6 py-4 font-semibold">ความสำคัญ</th>
+                                    <th class="px-6 py-4 font-semibold">สถานะ</th>
+                                    <th class="px-6 py-4 font-semibold text-right">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body-tasks" class="divide-y divide-slate-200/30 dark:divide-slate-700/30 text-sm">
+                                <!-- Data injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="pagination-tasks" class="p-4 border-t border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center text-sm"></div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- VIEW: KANBAN BOARD (กระดานคัมบัง) -->
+            <!-- ========================================== -->
+                    <!-- ========================================== -->
+            <!-- VIEW: KANBAN BOARD (กระดานคัมบัง รองรับ Drag & Drop) -->
+            <!-- ========================================== -->
+            <div id="view-kanban" class="view-section hidden animate-fade-in h-[calc(100vh-140px)] flex flex-col">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold">กระดานคัมบัง (Kanban Board)</h2>
+                        <p class="text-sm text-slate-500">จัดการงานด้วยระบบ Drag & Drop แบ่งสถานะอย่างชัดเจน</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <!-- User Filter (Avatar) -->
+                        <div class="flex -space-x-2 mr-4">
+                            <img class="w-8 h-8 rounded-full border-2 border-white dark:border-slate-800" src="https://api.dicebear.com/7.x/micah/svg?seed=MarketBlue" title="Market Analyst">
+                            <img class="w-8 h-8 rounded-full border-2 border-white dark:border-slate-800" src="https://api.dicebear.com/7.x/micah/svg?seed=DesignerPurple" title="Product Designer">
+                            <div class="w-8 h-8 rounded-full border-2 border-white dark:border-slate-800 bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-500 cursor-pointer hover:bg-slate-300 transition-colors">+3</div>
+                        </div>
+                        <button onclick="fetchData('kanban')" class="p-2 text-slate-500 hover:text-brand-500 bg-white/40 dark:bg-slate-800/50 rounded-lg transition-all glass-card">
+                            <i class="fa-solid fa-filter"></i>
+                        </button>
+                        <button class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg text-sm shadow-md flex items-center">
+                            <i class="fa-solid fa-plus mr-2"></i> สร้างงาน
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex-1 flex gap-6 overflow-x-auto pb-4 kanban-container custom-scrollbar">
+                    
+                    <!-- COLUMN 1: Todo (รอดำเนินการ) -->
+                    <div class="flex-shrink-0 w-80 flex flex-col glass-card bg-slate-50/50 dark:bg-slate-800/30 rounded-xl overflow-hidden border-t-4 border-t-slate-400">
+                        <div class="p-4 flex justify-between items-center font-bold border-b border-slate-200/50 dark:border-slate-700/50">
+                            <span>รอดำเนินการ (Todo)</span>
+                            <span class="bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded-full text-xs">2</span>
+                        </div>
+                        <div id="kanban-todo" class="p-3 flex-1 overflow-y-auto space-y-3 min-h-[150px] transition-colors rounded-b-xl" ondrop="drop(event, 'Todo')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                            
+                            <!-- Card 1 -->
+                            <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow relative overflow-hidden" draggable="true" ondragstart="dragStart(event)">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-red-500"></div> <!-- Priority High -->
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-600 dark:bg-red-900/40">ด่วนมาก</span>
+                                    <button class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-ellipsis"></i></button>
+                                </div>
+                                <h4 class="font-bold text-sm mb-1">ปรับปรุงโครงสร้าง Database</h4>
+                                <p class="text-xs text-slate-500 mb-3 line-clamp-2">เพิ่มตารางใหม่รองรับระบบ Kanban และ Timeline</p>
+                                <div class="flex justify-between items-center text-xs text-slate-400">
+                                    <span class="flex items-center text-red-500"><i class="fa-regular fa-clock mr-1"></i> วันนี้</span>
+                                    <img class="w-6 h-6 rounded-full border border-slate-200 dark:border-slate-700" src="https://api.dicebear.com/7.x/micah/svg?seed=DesignerPurple" title="Assigned to Beta Designer">
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- COLUMN 2: Doing (กำลังดำเนินการ) -->
+                    <div class="flex-shrink-0 w-80 flex flex-col glass-card bg-blue-50/50 dark:bg-blue-900/10 rounded-xl overflow-hidden border-t-4 border-t-blue-500">
+                        <div class="p-4 flex justify-between items-center font-bold border-b border-slate-200/50 dark:border-slate-700/50">
+                            <span>กำลังดำเนินการ (Doing)</span>
+                            <span class="bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 px-2 py-0.5 rounded-full text-xs">1</span>
+                        </div>
+                        <div id="kanban-doing" class="p-3 flex-1 overflow-y-auto space-y-3 min-h-[150px] transition-colors rounded-b-xl" ondrop="drop(event, 'Doing')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                            
+                            <!-- Card 2 -->
+                            <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow relative overflow-hidden" draggable="true" ondragstart="dragStart(event)">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-amber-500"></div> <!-- Priority Medium -->
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-600 dark:bg-blue-900/40">แคมเปญ Q4</span>
+                                </div>
+                                <h4 class="font-bold text-sm mb-1">วิเคราะห์คู่แข่งบน Social Media</h4>
+                                <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 my-3">
+                                    <div class="bg-blue-500 h-1.5 rounded-full" style="width: 45%"></div>
+                                </div>
+                                <div class="flex justify-between items-center text-xs text-slate-400">
+                                    <span class="flex items-center"><i class="fa-solid fa-list-check mr-1"></i> 3/8</span>
+                                    <img class="w-6 h-6 rounded-full border border-slate-200 dark:border-slate-700" src="https://api.dicebear.com/7.x/micah/svg?seed=MarketBlue" title="Market Analyst">
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- COLUMN 3: Review (รอตรวจสอบ) -->
+                    <div class="flex-shrink-0 w-80 flex flex-col glass-card bg-amber-50/50 dark:bg-amber-900/10 rounded-xl overflow-hidden border-t-4 border-t-amber-500">
+                        <div class="p-4 flex justify-between items-center font-bold border-b border-slate-200/50 dark:border-slate-700/50">
+                            <span>รอตรวจสอบ (Review)</span>
+                            <span class="bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300 px-2 py-0.5 rounded-full text-xs">1</span>
+                        </div>
+                        <div id="kanban-review" class="p-3 flex-1 overflow-y-auto space-y-3 min-h-[150px] transition-colors rounded-b-xl" ondrop="drop(event, 'Review')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                            
+                            <!-- Card 3 -->
+                            <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm border border-amber-300 dark:border-amber-700/50 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow relative overflow-hidden" draggable="true" ondragstart="dragStart(event)">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div> <!-- Priority Low -->
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-600 dark:bg-purple-900/40">UX/UI</span>
+                                    <span class="text-[10px] text-amber-600 flex items-center animate-pulse"><i class="fa-solid fa-eye mr-1"></i>รอตรวจ</span>
+                                </div>
+                                <h4 class="font-bold text-sm mb-1">Mockup หน้า Dashboard</h4>
+                                <div class="flex justify-between items-center text-xs text-slate-400 mt-3 border-t border-slate-100 dark:border-slate-700 pt-2">
+                                    <span class="flex items-center"><i class="fa-solid fa-paperclip mr-1"></i> 2 ไฟล์</span>
+                                    <img class="w-6 h-6 rounded-full border border-slate-200 dark:border-slate-700" src="https://api.dicebear.com/7.x/micah/svg?seed=DesignerPurple" title="Beta Designer">
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- COLUMN 4: Done (เสร็จสิ้น) -->
+                    <div class="flex-shrink-0 w-80 flex flex-col glass-card bg-emerald-50/50 dark:bg-emerald-900/10 rounded-xl overflow-hidden border-t-4 border-t-emerald-500">
+                        <div class="p-4 flex justify-between items-center font-bold border-b border-slate-200/50 dark:border-slate-700/50">
+                            <span>เสร็จสิ้น (Done)</span>
+                            <span class="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300 px-2 py-0.5 rounded-full text-xs">0</span>
+                        </div>
+                        <div id="kanban-done" class="p-3 flex-1 overflow-y-auto space-y-3 min-h-[150px] transition-colors rounded-b-xl" ondrop="drop(event, 'Done')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                            <!-- Empty State -->
+                            <div class="h-24 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg flex flex-col items-center justify-center text-slate-400">
+                                <i class="fa-solid fa-check-double mb-1"></i>
+                                <span class="text-xs">ลากงานที่เสร็จแล้วมาที่นี่</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- VIEW: TIMELINE & GANTT CHART (ระบบจัดการแผนงาน) -->
+            <!-- ========================================== -->
+            <div id="view-timeline" class="view-section hidden animate-fade-in flex flex-col h-[calc(100vh-140px)]">
+                
+                <!-- Toolbar Area -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold">แผนงานโครงการ (Gantt Chart)</h2>
+                        <p class="text-sm text-slate-500">ติดตามความคืบหน้า Milestone และ Critical Path ของทุกโปรเจกต์</p>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 bg-white/40 dark:bg-slate-800/50 p-1 rounded-lg glass-card">
+                        <!-- Zoom Controls -->
+                        <button class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-500 hover:bg-white dark:hover:bg-slate-700 transition-all">Week</button>
+                        <button class="px-3 py-1.5 text-xs font-bold rounded-md bg-white dark:bg-slate-700 text-brand-500 shadow-sm transition-all">Month</button>
+                        <button class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-500 hover:bg-white dark:hover:bg-slate-700 transition-all">Quarter</button>
+                        <button class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-500 hover:bg-white dark:hover:bg-slate-700 transition-all">Year</button>
+                        <div class="w-px h-4 bg-slate-300 dark:bg-slate-600 mx-1"></div>
+                        <button class="px-3 py-1.5 text-xs font-bold rounded-md bg-brand-500 text-white hover:bg-brand-600 transition-all shadow-sm">
+                            <i class="fa-solid fa-plus mr-1"></i> Add Task
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Main Gantt Interface Split -->
+                <div class="flex-1 glass-card overflow-hidden flex flex-col md:flex-row shadow-lg border border-slate-200/50 dark:border-slate-700/50">
+                    
+                    <!-- Left: Task List (WBS) -->
+                    <div class="w-full md:w-80 border-b md:border-b-0 md:border-r border-slate-200/50 dark:border-slate-700/50 flex flex-col bg-white/30 dark:bg-slate-800/30">
+                        <!-- Header -->
+                        <div class="h-12 border-b border-slate-200/50 dark:border-slate-700/50 flex items-center px-4 bg-slate-50/50 dark:bg-slate-900/50 text-xs font-bold text-slate-500 uppercase">
+                            <div class="flex-1">Task Name</div>
+                            <div class="w-12 text-center"><i class="fa-solid fa-users"></i></div>
+                        </div>
+                        <!-- List -->
+                        <div class="flex-1 overflow-y-auto custom-scrollbar">
+                            <!-- Project Group -->
+                            <div class="flex items-center px-3 py-2 border-b border-slate-100 dark:border-slate-700/30 bg-slate-100/50 dark:bg-slate-800/50">
+                                <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 mr-2 cursor-pointer"></i>
+                                <span class="text-sm font-bold truncate flex-1">PRJ-002: แคมเปญเปิดตัว Q4</span>
+                            </div>
+                            
+                            <!-- Tasks -->
+                            <div class="flex items-center px-3 py-2 border-b border-slate-100 dark:border-slate-700/30 hover:bg-white/50 dark:hover:bg-slate-800 transition-colors group">
+                                <div class="w-4 h-4 rounded border border-slate-300 dark:border-slate-600 mr-2 flex items-center justify-center bg-brand-500 border-brand-500 text-white text-[10px]"><i class="fa-solid fa-check"></i></div>
+                                <span class="text-xs truncate flex-1 text-slate-500 line-through">1. Market Research</span>
+                                <img class="w-5 h-5 rounded-full ml-2" src="https://api.dicebear.com/7.x/micah/svg?seed=MarketBlue">
+                            </div>
+
+                            <div class="flex items-center px-3 py-2 border-b border-slate-100 dark:border-slate-700/30 hover:bg-white/50 dark:hover:bg-slate-800 transition-colors bg-blue-50/30 dark:bg-blue-900/10 border-l-2 border-l-blue-500">
+                                <div class="w-4 h-4 rounded border border-slate-300 dark:border-slate-600 mr-2"></div>
+                                <span class="text-xs font-bold truncate flex-1 text-slate-800 dark:text-slate-200">2. UI/UX Design (Critical)</span>
+                                <img class="w-5 h-5 rounded-full ml-2" src="https://api.dicebear.com/7.x/micah/svg?seed=DesignerPurple">
+                            </div>
+
+                            <div class="flex items-center px-3 py-2 border-b border-slate-100 dark:border-slate-700/30 hover:bg-white/50 dark:hover:bg-slate-800 transition-colors">
+                                <div class="w-4 h-4 rounded border border-slate-300 dark:border-slate-600 mr-2"></div>
+                                <span class="text-xs truncate flex-1">3. Content Drafting</span>
+                                <img class="w-5 h-5 rounded-full ml-2" src="https://api.dicebear.com/7.x/micah/svg?seed=ContentGreen">
+                            </div>
+
+                            <!-- Milestone Item -->
+                            <div class="flex items-center px-3 py-2 border-b border-slate-100 dark:border-slate-700/30 bg-amber-50/30 dark:bg-amber-900/10">
+                                <i class="fa-solid fa-diamond text-[10px] text-amber-500 mr-2"></i>
+                                <span class="text-xs font-bold text-amber-600 dark:text-amber-400 truncate flex-1">Milestone: Design Sign-off</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Gantt Chart Area -->
+                    <div class="flex-1 flex flex-col relative overflow-hidden bg-white/10 dark:bg-slate-900/10">
+                        
+                        <!-- Timeline Header (Months / Weeks) -->
+                        <div class="h-12 border-b border-slate-200/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-900/50 flex overflow-hidden">
+                            <div class="flex-none w-[200px] border-r border-slate-200/50 dark:border-slate-700/50 p-1 text-center">
+                                <div class="text-[10px] font-bold text-slate-500">July 2026</div>
+                                <div class="flex justify-between text-[9px] text-slate-400 mt-1 px-2"><span>W1</span><span>W2</span><span>W3</span><span>W4</span></div>
+                            </div>
+                            <div class="flex-none w-[200px] border-r border-slate-200/50 dark:border-slate-700/50 p-1 text-center">
+                                <div class="text-[10px] font-bold text-slate-500">August 2026</div>
+                                <div class="flex justify-between text-[9px] text-slate-400 mt-1 px-2"><span>W1</span><span>W2</span><span>W3</span><span>W4</span></div>
+                            </div>
+                            <div class="flex-none w-[200px] p-1 text-center">
+                                <div class="text-[10px] font-bold text-slate-500">September 2026</div>
+                                <div class="flex justify-between text-[9px] text-slate-400 mt-1 px-2"><span>W1</span><span>W2</span><span>W3</span><span>W4</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Gantt Grid & Bars -->
+                        <div class="flex-1 relative overflow-auto gantt-container custom-scrollbar">
+                            
+                            <!-- Today Line Indicator -->
+                            <div class="absolute top-0 bottom-0 left-[180px] w-0.5 bg-red-400/50 z-20 pointer-events-none flex flex-col items-center">
+                                <div class="bg-red-500 text-white text-[9px] px-1 rounded-b">Today</div>
+                            </div>
+
+                            <!-- SVG Layer for Dependencies (Mockup drawing) -->
+                            <svg class="absolute inset-0 w-full h-full pointer-events-none z-10">
+                                <defs>
+                                    <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                                        <polygon points="0 0, 6 3, 0 6" class="dependency-arrow" />
+                                    </marker>
+                                </defs>
+                                <!-- Line from Task 1 to Task 2 -->
+                                <path d="M 160 55 L 175 55 L 175 90 L 190 90" class="dependency-line" marker-end="url(#arrowhead)" />
+                                <!-- Line from Task 2 to Task 3 -->
+                                <path d="M 310 90 L 325 90 L 325 125 L 340 125" class="dependency-line" marker-end="url(#arrowhead)" />
+                            </svg>
+
+                            <!-- Row 1: Project Header (No bar, just spacing) -->
+                            <div class="h-9 w-full flex items-center relative"></div>
+                            
+                            <!-- Row 2: Task 1 (Done) -->
+                            <div class="h-9 w-full flex items-center relative group">
+                                <div class="gantt-bar bg-slate-400 h-5 absolute left-[50px] w-[110px] z-10 cursor-pointer text-[10px] text-white px-2">
+                                    <div class="gantt-progress" style="width: 100%;"></div>
+                                    <span class="relative z-10 truncate">Market Research</span>
+                                </div>
+                            </div>
+
+                            <!-- Row 3: Task 2 (In Progress - Critical Path) -->
+                            <div class="h-9 w-full flex items-center relative group">
+                                <div class="gantt-bar bg-purple-500 h-5 absolute left-[195px] w-[115px] z-10 cursor-pointer text-[10px] text-white px-2 gantt-critical">
+                                    <div class="gantt-progress bg-white/30" style="width: 45%;"></div>
+                                    <span class="relative z-10 font-bold truncate">UI/UX Design</span>
+                                </div>
+                                <!-- Reminder Icon -->
+                                <div class="absolute left-[315px] z-10 text-red-500 animate-pulse" title="Deadline approaching"><i class="fa-solid fa-bell text-xs"></i></div>
+                            </div>
+
+                            <!-- Row 4: Task 3 (Pending) -->
+                            <div class="h-9 w-full flex items-center relative group">
+                                <div class="gantt-bar bg-brand-500 h-5 absolute left-[345px] w-[80px] z-10 cursor-pointer text-[10px] text-white px-2 opacity-60">
+                                    <span class="relative z-10 truncate">Content</span>
+                                </div>
+                            </div>
+
+                            <!-- Row 5: Milestone -->
+                            <div class="h-9 w-full flex items-center relative group">
+                                <div class="gantt-milestone absolute left-[310px] cursor-pointer" title="Design Sign-off: 15 Aug 2026"></div>
+                                <span class="absolute left-[335px] text-[10px] font-bold text-amber-600 dark:text-amber-400">Design Sign-off</span>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ========================================== -->
+            <!-- VIEW: REPORTS & ANALYTICS (Dashboard การวิเคราะห์ข้อมูลเชิงลึก) -->
+            <!-- ========================================== -->
+            <div id="view-reports" class="view-section hidden animate-fade-in space-y-6">
+                
+                <!-- Analytics Header & Export Tools -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2">
+                    <div>
+                        <h2 class="text-2xl font-bold">Analytics & Reports</h2>
+                        <p class="text-sm text-slate-500">วิเคราะห์ประสิทธิภาพโปรเจกต์, ทีม AI, การตลาด และรายได้ขององค์กร</p>
+                    </div>
+                    
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Date Range Selector -->
+                        <div class="bg-white/40 dark:bg-slate-800/50 rounded-lg px-3 py-2 text-sm glass-card flex items-center border border-slate-200 dark:border-slate-700 mr-2">
+                            <i class="fa-regular fa-calendar text-brand-500 mr-2"></i>
+                            <select class="bg-transparent focus:outline-none font-medium cursor-pointer text-slate-700 dark:text-slate-200">
+                                <option>ไตรมาสที่ 3 (Q3), 2026</option>
+                                <option>เดือนนี้ (กรกฎาคม)</option>
+                                <option>7 วันที่ผ่านมา</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Export Buttons -->
+                        <button class="px-3 py-2 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-all rounded-lg text-sm shadow-sm flex items-center font-bold">
+                            <i class="fa-solid fa-file-excel mr-2"></i> Excel
+                        </button>
+                        <button class="px-3 py-2 bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all rounded-lg text-sm shadow-sm flex items-center font-bold">
+                            <i class="fa-solid fa-file-csv mr-2"></i> CSV
+                        </button>
+                        <button class="px-3 py-2 bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/50 transition-all rounded-lg text-sm shadow-sm flex items-center font-bold">
+                            <i class="fa-solid fa-file-pdf mr-2"></i> PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TOP KPI GRID -->
+                <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                    <!-- Revenue -->
+                    <div class="glass-card p-4 relative overflow-hidden group">
+                        <div class="absolute -right-6 -bottom-6 opacity-10 text-6xl group-hover:scale-110 transition-transform"><i class="fa-solid fa-sack-dollar text-emerald-500"></i></div>
+                        <p class="text-xs text-slate-500 font-medium mb-1">รายได้ (Revenue)</p>
+                        <h3 class="text-2xl font-bold text-slate-800 dark:text-white">฿2.4M</h3>
+                        <p class="text-[10px] text-emerald-500 mt-2 flex items-center"><i class="fa-solid fa-arrow-trend-up mr-1"></i> +15.3% จากเดือนก่อน</p>
+                    </div>
+                    <!-- AI Efficiency -->
+                    <div class="glass-card p-4 relative overflow-hidden group">
+                        <div class="absolute -right-6 -bottom-6 opacity-10 text-6xl group-hover:scale-110 transition-transform"><i class="fa-solid fa-bolt text-purple-500"></i></div>
+                        <p class="text-xs text-slate-500 font-medium mb-1">AI Efficiency</p>
+                        <h3 class="text-2xl font-bold text-slate-800 dark:text-white">94.8%</h3>
+                        <p class="text-[10px] text-emerald-500 mt-2 flex items-center"><i class="fa-solid fa-arrow-trend-up mr-1"></i> +2.1% ความเร็ว</p>
+                    </div>
+                    <!-- Completed Tasks -->
+                    <div class="glass-card p-4 relative overflow-hidden group border-b-4 border-b-brand-500">
+                        <div class="absolute -right-6 -bottom-6 opacity-10 text-6xl group-hover:scale-110 transition-transform"><i class="fa-solid fa-check-double text-brand-500"></i></div>
+                        <p class="text-xs text-slate-500 font-medium mb-1">งานที่สำเร็จ (Completed)</p>
+                        <h3 class="text-2xl font-bold text-brand-500">845</h3>
+                        <p class="text-[10px] text-slate-400 mt-2">ตามเป้าหมาย (On Track)</p>
+                    </div>
+                    <!-- Pending Tasks -->
+                    <div class="glass-card p-4 relative overflow-hidden group border-b-4 border-b-amber-500">
+                        <div class="absolute -right-6 -bottom-6 opacity-10 text-6xl group-hover:scale-110 transition-transform"><i class="fa-solid fa-hourglass-half text-amber-500"></i></div>
+                        <p class="text-xs text-slate-500 font-medium mb-1">รอดำเนินการ (Pending)</p>
+                        <h3 class="text-2xl font-bold text-amber-500">124</h3>
+                        <p class="text-[10px] text-slate-400 mt-2">กำลังอยู่ใน Workflow</p>
+                    </div>
+                    <!-- Delayed Tasks -->
+                    <div class="glass-card p-4 relative overflow-hidden group border-b-4 border-b-red-500">
+                        <div class="absolute -right-6 -bottom-6 opacity-10 text-6xl group-hover:scale-110 transition-transform"><i class="fa-solid fa-triangle-exclamation text-red-500"></i></div>
+                        <p class="text-xs text-slate-500 font-medium mb-1">ล่าช้า (Delayed)</p>
+                        <h3 class="text-2xl font-bold text-red-500">12</h3>
+                        <p class="text-[10px] text-red-400 mt-2 flex items-center"><i class="fa-solid fa-arrow-trend-down mr-1"></i> ต้องแก้ไขด่วน (Critical)</p>
+                    </div>
+                </div>
+
+                <!-- MAIN CHARTS (Area & Bar) -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Area Chart: Revenue & Marketing ROI -->
+                    <div class="glass-card p-5 lg:col-span-2">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-lg"><i class="fa-solid fa-chart-area mr-2 text-emerald-500"></i>Revenue vs Marketing Spend (Area)</h3>
+                            <button class="text-xs text-slate-500 hover:text-brand-500"><i class="fa-solid fa-expand"></i></button>
+                        </div>
+                        <div class="h-72 w-full relative">
+                            <!-- จะถูกเรนเดอร์โดย Chart.js (Area Chart) -->
+                            <canvas id="chart-revenue-area"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Bar Chart: Workflow Department Performance -->
+                    <div class="glass-card p-5">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-lg"><i class="fa-solid fa-chart-column mr-2 text-brand-500"></i>Workflow Completion (Bar)</h3>
+                        </div>
+                        <div class="h-72 w-full relative">
+                            <!-- จะถูกเรนเดอร์โดย Chart.js (Bar Chart) -->
+                            <canvas id="chart-workflow-bar"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECONDARY CHARTS (Radar, Pie & Heatmap) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    
+                    <!-- Radar Chart: AI Team Performance Map -->
+                    <div class="glass-card p-5 flex flex-col items-center">
+                        <h3 class="font-bold text-lg mb-2 self-start"><i class="fa-solid fa-spider mr-2 text-purple-500"></i>AI Capabilities (Radar)</h3>
+                        <p class="text-xs text-slate-500 self-start mb-4">วิเคราะห์ศักยภาพภาพรวมของ AI ทั้ง 5 โมเดล</p>
+                        <div class="h-64 w-full max-w-[300px] relative">
+                            <!-- จะถูกเรนเดอร์โดย Chart.js (Radar Chart) -->
+                            <canvas id="chart-ai-radar"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Pie Chart: Project Status Distribution -->
+                    <div class="glass-card p-5 flex flex-col items-center">
+                        <h3 class="font-bold text-lg mb-2 self-start"><i class="fa-solid fa-chart-pie mr-2 text-amber-500"></i>Project Status (Pie)</h3>
+                        <p class="text-xs text-slate-500 self-start mb-4">สัดส่วนโปรเจกต์แยกตามสถานะการดำเนินงาน</p>
+                        <div class="h-64 w-full max-w-[280px] relative flex items-center justify-center">
+                            <!-- จะถูกเรนเดอร์โดย Chart.js (Pie Chart) -->
+                            <canvas id="chart-status-pie"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Activity Heatmap (CSS Grid Based) -->
+                    <div class="glass-card p-5 flex flex-col">
+                        <h3 class="font-bold text-lg mb-2"><i class="fa-solid fa-border-all mr-2 text-red-500"></i>AI Workload (Heatmap)</h3>
+                        <p class="text-xs text-slate-500 mb-6">ความหนาแน่นของภาระงานในรอบ 7 วันที่ผ่านมา</p>
+                        
+                        <div class="flex-1 flex flex-col justify-center">
+                            <div class="grid grid-cols-8 gap-1 text-[10px] text-center text-slate-400 mb-2">
+                                <div></div> <!-- Empty top-left -->
+                                <div>จ.</div><div>อ.</div><div>พ.</div><div>พฤ.</div><div>ศ.</div><div>ส.</div><div>อา.</div>
+                            </div>
+                            
+                            <!-- Market Analyst -->
+                            <div class="grid grid-cols-8 gap-1 mb-1 items-center">
+                                <div class="text-[10px] font-bold text-blue-500 text-right pr-2 truncate">Analyst</div>
+                                <div class="h-6 rounded bg-brand-500/80" title="Heavy"></div>
+                                <div class="h-6 rounded bg-brand-500/90" title="Heavy"></div>
+                                <div class="h-6 rounded bg-brand-500/40" title="Medium"></div>
+                                <div class="h-6 rounded bg-brand-500/20" title="Low"></div>
+                                <div class="h-6 rounded bg-brand-500/60" title="Medium"></div>
+                                <div class="h-6 rounded bg-slate-200 dark:bg-slate-700" title="Idle"></div>
+                                <div class="h-6 rounded bg-slate-200 dark:bg-slate-700" title="Idle"></div>
+                            </div>
+                            
+                            <!-- Product Designer -->
+                            <div class="grid grid-cols-8 gap-1 mb-1 items-center">
+                                <div class="text-[10px] font-bold text-purple-500 text-right pr-2 truncate">Designer</div>
+                                <div class="h-6 rounded bg-brand-500/30"></div>
+                                <div class="h-6 rounded bg-brand-500/50"></div>
+                                <div class="h-6 rounded bg-brand-500/80"></div>
+                                <div class="h-6 rounded bg-brand-500/100" title="Critical"></div>
+                                <div class="h-6 rounded bg-brand-500/90"></div>
+                                <div class="h-6 rounded bg-brand-500/40"></div>
+                                <div class="h-6 rounded bg-slate-200 dark:bg-slate-700"></div>
+                            </div>
+                            
+                            <!-- Content Writer -->
+                            <div class="grid grid-cols-8 gap-1 mb-1 items-center">
+                                <div class="text-[10px] font-bold text-emerald-500 text-right pr-2 truncate">Writer</div>
+                                <div class="h-6 rounded bg-brand-500/20"></div>
+                                <div class="h-6 rounded bg-brand-500/30"></div>
+                                <div class="h-6 rounded bg-brand-500/20"></div>
+                                <div class="h-6 rounded bg-brand-500/50"></div>
+                                <div class="h-6 rounded bg-brand-500/70"></div>
+                                <div class="h-6 rounded bg-brand-500/40"></div>
+                                <div class="h-6 rounded bg-brand-500/20"></div>
+                            </div>
+                            
+                            <!-- Marketing Manager -->
+                            <div class="grid grid-cols-8 gap-1 mb-1 items-center">
+                                <div class="text-[10px] font-bold text-red-500 text-right pr-2 truncate">Manager</div>
+                                <div class="h-6 rounded bg-brand-500/90"></div>
+                                <div class="h-6 rounded bg-brand-500/100" title="Critical"></div>
+                                <div class="h-6 rounded bg-brand-500/80"></div>
+                                <div class="h-6 rounded bg-brand-500/40"></div>
+                                <div class="h-6 rounded bg-brand-500/30"></div>
+                                <div class="h-6 rounded bg-slate-200 dark:bg-slate-700"></div>
+                                <div class="h-6 rounded bg-slate-200 dark:bg-slate-700"></div>
+                            </div>
+
+                            <div class="flex justify-between items-center mt-3 px-2 text-[9px] text-slate-400">
+                                <span>ว่าง (Idle)</span>
+                                <div class="flex w-24 h-2 rounded overflow-hidden">
+                                    <div class="flex-1 bg-slate-200 dark:bg-slate-700"></div>
+                                    <div class="flex-1 bg-brand-500/30"></div>
+                                    <div class="flex-1 bg-brand-500/60"></div>
+                                    <div class="flex-1 bg-brand-500/100"></div>
+                                </div>
+                                <span>หนัก (Heavy)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- ========================================== -->
+            <!-- VIEW: AI CHAT (ห้องแชท AI) -->
+            <!-- ========================================== -->
+                        <!-- ========================================== -->
+            <!-- VIEW: ADVANCED AI CHAT & MEMORY SYSTEM -->
+            <!-- ========================================== -->
+            <div id="view-chat" class="view-section hidden animate-fade-in h-[calc(100vh-140px)] flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold">ศูนย์ปฏิบัติการ AI (Workspace & Chat)</h2>
+                        <p class="text-sm text-slate-500">สนทนา, สั่งงาน และจัดการบริบท (Context) แยกตาม AI แต่ละแผนก</p>
+                    </div>
+                </div>
+
+                <!-- 3-Column Chat Layout -->
+                <div class="flex-1 glass-card overflow-hidden flex flex-col md:flex-row shadow-lg">
+                    
+                    <!-- COLUMN 1: AI Agent List (Sidebar) -->
+                    <div class="w-full md:w-64 border-b md:border-b-0 md:border-r border-slate-200/50 dark:border-slate-700/50 bg-white/40 dark:bg-slate-800/40 flex flex-col">
+                        <div class="p-4 border-b border-slate-200/50 dark:border-slate-700/50">
+                            <h3 class="text-sm font-bold text-slate-500 uppercase">ทีมงาน AI ประจำระบบ</h3>
+                        </div>
+                        <div id="chat-ai-list" class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
+                            
+                            <!-- AI Agent 1 (Active) -->
+                            <div class="p-3 bg-brand-50/80 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800/50 rounded-xl cursor-pointer flex items-center shadow-sm">
+                                <div class="relative w-10 h-10 rounded-full bg-white dark:bg-slate-800 flex-shrink-0 flex items-end justify-center overflow-hidden border-2 border-brand-500 mr-3">
+                                    <img src="https://api.dicebear.com/7.x/micah/svg?seed=ContentGreen" class="w-full h-full object-cover">
+                                    <div class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-slate-800 rounded-full z-10"></div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-sm font-bold truncate">Content Writer</h4>
+                                    <p class="text-[10px] text-brand-500 truncate flex items-center">
+                                        <i class="fa-solid fa-pen-nib mr-1"></i> กำลังพิมพ์...
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- AI Agent 2 (Idle) -->
+                            <div class="p-3 hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-xl cursor-pointer flex items-center transition-colors">
+                                <div class="relative w-10 h-10 rounded-full bg-white dark:bg-slate-800 flex-shrink-0 flex items-end justify-center overflow-hidden mr-3">
+                                    <img src="https://api.dicebear.com/7.x/micah/svg?seed=MarketBlue" class="w-full h-full object-cover">
+                                    <div class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-slate-800 rounded-full z-10"></div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-sm font-bold truncate text-slate-700 dark:text-slate-300">Market Analyst</h4>
+                                    <p class="text-[10px] text-slate-500 truncate">Online / ว่าง</p>
+                                </div>
+                            </div>
+
+                            <!-- AI Agent 3 (Thinking/Working) -->
+                            <div class="p-3 hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-xl cursor-pointer flex items-center transition-colors">
+                                <div class="relative w-10 h-10 rounded-full bg-white dark:bg-slate-800 flex-shrink-0 flex items-end justify-center overflow-hidden mr-3 thinking-glow">
+                                    <img src="https://api.dicebear.com/7.x/micah/svg?seed=DesignerPurple" class="w-full h-full object-cover">
+                                    <div class="absolute bottom-0 right-0 w-3 h-3 bg-purple-500 border-2 border-white dark:border-slate-800 rounded-full z-10"></div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-sm font-bold truncate text-slate-700 dark:text-slate-300">Product Designer</h4>
+                                    <p class="text-[10px] text-purple-500 truncate flex items-center">
+                                        <i class="fa-solid fa-spinner fa-spin mr-1"></i> Thinking...
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COLUMN 2: Main Chat Interface -->
+                    <div class="flex-1 flex flex-col bg-white/20 dark:bg-slate-900/20 relative min-w-[300px]">
+                        <!-- Chat Header & Context Selector -->
+                        <div class="h-16 border-b border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center px-4 md:px-6 bg-white/30 dark:bg-slate-800/30 backdrop-blur-md z-10">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-end justify-center overflow-hidden mr-3">
+                                    <img src="https://api.dicebear.com/7.x/micah/svg?seed=ContentGreen" class="w-full h-full object-cover">
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-sm">Content Writer <span class="bg-brand-100 text-brand-600 dark:bg-brand-900/40 text-[10px] px-2 py-0.5 rounded ml-2">GPT-4 Turbo</span></h3>
+                                    <p class="text-[10px] text-emerald-500"><i class="fa-solid fa-circle text-[8px] mr-1"></i>Active Memory Connection</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Select Context (Project Focus) -->
+                            <div class="hidden sm:flex items-center bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 shadow-sm">
+                                <span class="text-xs text-slate-500 mr-2">โฟกัสโปรเจกต์:</span>
+                                <select class="text-xs font-bold bg-transparent focus:outline-none text-slate-700 dark:text-slate-200 cursor-pointer">
+                                    <option>PRJ-002: แคมเปญเปิดตัว Q4</option>
+                                    <option>PRJ-001: SEO Blog ประจำเดือน</option>
+                                    <option>ไม่มีบริบท (General Chat)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Messages Area -->
+                        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 custom-scrollbar bg-mesh-light dark:bg-mesh-dark">
+                            
+                            <!-- Context Loaded Indicator (System Message) -->
+                            <div class="flex justify-center msg-pop">
+                                <div class="bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400 text-[10px] px-3 py-1 rounded-full border border-brand-200/50 dark:border-brand-700/30 shadow-sm flex items-center">
+                                    <i class="fa-solid fa-database mr-2"></i> โหลดบริบทโปรเจกต์ "แคมเปญเปิดตัว Q4" และความรู้ "Brand Guidelines" สำเร็จ
+                                </div>
+                            </div>
+
+                            <!-- User Message -->
+                            <div class="flex flex-col items-end msg-pop">
+                                <div class="flex items-end max-w-[85%] md:max-w-[70%]">
+                                    <div class="bg-brand-500 text-white p-3 md:p-4 rounded-2xl rounded-tr-sm shadow-md text-sm relative group">
+                                        ช่วยเขียนแคปชั่น Facebook สำหรับเปิดตัวฟีเจอร์ใหม่ โดยอิงจากข้อมูล Market Research ที่ส่งให้เมื่อวานหน่อย เอาแบบดึงดูด Pain point ชัดเจน
+                                        
+                                        <!-- Read Receipt -->
+                                        <div class="absolute -bottom-4 right-1 flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <span class="text-[9px] text-slate-400 mr-1">10:42</span>
+                                            <i class="fa-solid fa-check-double text-[10px] text-blue-500"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- AI Message -->
+                            <div class="flex items-start msg-pop">
+                                <div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 flex items-end justify-center overflow-hidden mr-3 mt-1 shadow-sm">
+                                    <img src="https://api.dicebear.com/7.x/micah/svg?seed=ContentGreen" class="w-full h-full object-cover">
+                                </div>
+                                <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm p-3 md:p-4 rounded-2xl rounded-tl-sm shadow-sm border border-slate-200/50 dark:border-slate-700/50 max-w-[85%] md:max-w-[70%] text-sm">
+                                    <p class="mb-3">รับทราบครับ! จาก <span class="text-brand-500 cursor-pointer hover:underline bg-brand-50 dark:bg-brand-900/30 px-1 rounded">@Market_Trend_Q4.pdf</span> ที่อยู่ในความทรงจำ พบว่าลูกค้ามีปัญหาเรื่อง <b>"ใช้เวลานานเกินไปในการจัดการเอกสาร"</b></p>
+                                    <p>ผมขอดราฟต์แคปชั่นตามนี้ครับ:</p>
+                                    <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-700 mt-2 font-mono text-xs">
+                                        🚨 ยังนั่งงมกับกองเอกสารเป็นชั่วโมงอยู่หรือเปล่า!?<br><br>
+                                        จบทุกปัญหาความวุ่นวายด้วย ฟีเจอร์ใหม่ล่าสุดจากเรา! จัดการเอกสารอัตโนมัติใน 3 คลิก ประหยัดเวลาทำงานไปกว่า 80% ⚡️<br><br>
+                                        👉 ทดลองใช้ฟรีวันนี้: [Link]
+                                    </div>
+                                    <div class="mt-3 flex gap-2">
+                                        <button class="text-[10px] bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded text-slate-500 hover:text-brand-500 transition-colors"><i class="fa-regular fa-copy mr-1"></i>คัดลอก</button>
+                                        <button class="text-[10px] bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded text-slate-500 hover:text-brand-500 transition-colors"><i class="fa-solid fa-rotate-right mr-1"></i>สร้างใหม่ (Regenerate)</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- AI Typing Indicator -->
+                            <div class="flex items-center msg-pop">
+                                <div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 flex items-end justify-center overflow-hidden mr-3 shadow-sm">
+                                    <img src="https://api.dicebear.com/7.x/micah/svg?seed=ContentGreen" class="w-full h-full object-cover">
+                                </div>
+                                <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl rounded-tl-sm shadow-sm border border-slate-200/50 dark:border-slate-700/50">
+                                    <div class="typing-indicator">
+                                        <div class="typing-dot"></div>
+                                        <div class="typing-dot"></div>
+                                        <div class="typing-dot"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Input Area -->
+                        <div class="p-4 bg-white/30 dark:bg-slate-800/30 border-t border-slate-200/50 dark:border-slate-700/50 backdrop-blur-md">
+                            <form id="chat-form" onsubmit="handleChatSubmit(event)" class="relative flex items-end gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-2 shadow-inner transition-all focus-within:ring-2 focus-within:ring-brand-500/50">
+                                <button type="button" class="p-2 text-slate-400 hover:text-brand-500 transition-colors flex-shrink-0" title="แนบไฟล์ หรืออ้างอิง Prompt">
+                                    <i class="fa-solid fa-paperclip"></i>
+                                </button>
+                                <textarea id="chat-input-message" rows="1" placeholder="สั่งงาน Content Writer (ใช้ @ เพื่ออ้างอิงไฟล์ หรือ / เพื่อใช้ Prompt)..." class="w-full bg-transparent resize-none py-2 text-sm focus:outline-none max-h-32 custom-scrollbar"></textarea>
+                                <button type="submit" id="chat-send-btn" class="w-10 h-10 bg-brand-500 hover:bg-brand-600 text-white rounded-xl flex items-center justify-center transition-all shadow-md flex-shrink-0 mb-0.5 mr-0.5">
+                                    <i class="fa-solid fa-paper-plane text-sm"></i>
+                                </button>
+                            </form>
+                            <div class="flex justify-between items-center mt-2 px-1">
+                                <p class="text-[10px] text-slate-400">AI จดจำบริบทเฉพาะในโปรเจกต์ที่คุณเลือกเท่านั้น</p>
+                                <button class="text-[10px] text-red-500 hover:underline"><i class="fa-solid fa-broom mr-1"></i>ล้างความจำ (Clear Memory)</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COLUMN 3: Context & Memory Panel (Right Sidebar) -->
+                    <div class="hidden xl:flex w-72 border-l border-slate-200/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-900/30 flex-col overflow-hidden">
+                        <div class="p-4 border-b border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center bg-white/30 dark:bg-slate-800/30">
+                            <h3 class="text-sm font-bold"><i class="fa-solid fa-brain text-purple-500 mr-2"></i>Active Memory</h3>
+                            <span class="bg-purple-100 text-purple-600 dark:bg-purple-900/40 text-[9px] px-1.5 py-0.5 rounded font-bold">14.2K Tokens</span>
+                        </div>
+                        
+                        <div class="flex-1 overflow-y-auto p-4 space-y-5 custom-scrollbar">
+                            
+                            <!-- Context: Project -->
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">📌 โครงการปัจจุบัน</h4>
+                                <div class="bg-white/60 dark:bg-slate-800/60 p-3 rounded-lg border border-slate-200 dark:border-slate-700 text-sm shadow-sm">
+                                    <p class="font-bold text-brand-600 dark:text-brand-400">PRJ-002: แคมเปญเปิดตัว Q4</p>
+                                    <p class="text-xs text-slate-500 mt-1">เป้าหมาย: โปรโมทฟีเจอร์ AI ใหม่ เพิ่มยอด Sign up 20% ภายใน ธ.ค.</p>
+                                </div>
+                            </div>
+
+                            <!-- Context: Knowledge Loaded -->
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2"><i class="fa-solid fa-book-atlas mr-1"></i> Knowledge ที่ถูกดึงมาใช้</h4>
+                                <ul class="space-y-2">
+                                    <li class="bg-white/60 dark:bg-slate-800/60 p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs flex items-center justify-between group">
+                                        <span class="truncate pr-2"><i class="fa-regular fa-file-pdf text-red-400 mr-2"></i>Market_Trend_Q4.pdf</span>
+                                        <button class="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100"><i class="fa-solid fa-xmark"></i></button>
+                                    </li>
+                                    <li class="bg-white/60 dark:bg-slate-800/60 p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs flex items-center justify-between group">
+                                        <span class="truncate pr-2"><i class="fa-solid fa-font text-blue-400 mr-2"></i>Brand_Voice_Guidelines</span>
+                                        <button class="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100"><i class="fa-solid fa-xmark"></i></button>
+                                    </li>
+                                </ul>
+                                <button class="mt-2 text-xs text-brand-500 hover:underline w-full text-left"><i class="fa-solid fa-plus mr-1"></i>แนบ Knowledge เพิ่มเติม</button>
+                            </div>
+
+                            <!-- Context: Active Prompts -->
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2"><i class="fa-solid fa-terminal mr-1"></i> System Prompt</h4>
+                                <div class="bg-slate-800 dark:bg-black/50 p-3 rounded-lg border border-slate-700 text-xs text-green-400 font-mono shadow-inner relative overflow-hidden">
+                                    <div class="absolute top-0 right-0 p-1 bg-slate-700 rounded-bl text-[8px] text-white">PRM-002</div>
+                                    "คุณคือ Content Writer มืออาชีพ สไตล์การเขียนต้องกระชับ น่าตื่นเต้น และใช้ Emoji อย่างเหมาะสม เน้นการขายแบบ Soft Sell..."
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- VIEW: AI TEAM (หน้าแสดงทีม AI ทั้ง 5 คน) -->
+            <!-- ========================================== -->
+            <div id="view-ai_team" class="view-section hidden animate-fade-in space-y-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold">ทีมงานปัญญาประดิษฐ์ (AI Team)</h2>
+                        <p class="text-sm text-slate-500">ตรวจสอบสถานะ อารมณ์ พลังงาน และภาระงานของทีม AI</p>
+                    </div>
+                </div>
+
+                <!-- AI Grid Layout (5 Agents) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    
+                    <!-- AI 1: Market Analyst (Blue) -->
+                    <div class="glass-card overflow-hidden hover:shadow-blue-500/20 transition-all cursor-pointer group" onclick="openAIDetail('AI-01')">
+                        <div class="h-24 bg-gradient-to-r from-blue-600/40 to-blue-400/20 relative">
+                            <span class="absolute top-3 right-3 flex h-3 w-3">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                            </span>
+                        </div>
+                        <div class="px-6 pb-6 relative">
+                            <!-- Avatar (Animated) -->
+                            <div class="w-24 h-24 rounded-2xl bg-white dark:bg-slate-800 border-4 border-white dark:border-slate-800 shadow-xl absolute -top-12 flex justify-center items-end overflow-hidden ai-idle">
+                                <!-- ใช้ API วาดรูป Avatar สไตล์ 2D Anime สมมติ -->
+                                <img src="https://api.dicebear.com/7.x/micah/svg?seed=MarketBlue&backgroundColor=transparent" alt="Avatar" class="w-full h-full object-cover ai-eye-blink">
+                            </div>
+                            <div class="mt-14">
+                                <h3 class="text-lg font-bold text-blue-500">Market Analyst</h3>
+                                <p class="text-xs text-slate-500 uppercase tracking-wide">วิเคราะห์ตลาดและ SEO</p>
+                                
+                                <div class="mt-4 grid grid-cols-2 gap-2 text-sm">
+                                    <div class="bg-white/40 dark:bg-slate-900/40 p-2 rounded-lg text-center">
+                                        <i class="fa-solid fa-face-smile mood-excellent text-lg"></i>
+                                        <p class="text-[10px] text-slate-500 mt-1">อารมณ์</p>
+                                    </div>
+                                    <div class="bg-white/40 dark:bg-slate-900/40 p-2 rounded-lg text-center">
+                                        <i class="fa-solid fa-bolt text-blue-500 text-lg"></i>
+                                        <p class="text-[10px] text-slate-500 mt-1">พลังงาน 95%</p>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <p class="text-xs text-slate-500 mb-1">งานปัจจุบัน:</p>
+                                    <p class="text-sm truncate font-medium text-slate-700 dark:text-slate-300"><i class="fa-solid fa-magnifying-glass-chart mr-2 text-blue-400"></i>วิเคราะห์เทรนด์คู่แข่ง Q3</p>
+                                </div>
+                                <div class="mt-4 pt-4 border-t border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center text-xs">
+                                    <span class="bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 px-2 py-1 rounded">Thinking...</span>
+                                    <button class="text-blue-500 hover:underline">ดูข้อมูลเชิงลึก &rarr;</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI 2: Product Designer (Purple) -->
+                    <div class="glass-card overflow-hidden hover:shadow-purple-500/20 transition-all cursor-pointer group" onclick="openAIDetail('AI-02')">
+                        <div class="h-24 bg-gradient-to-r from-purple-600/40 to-purple-400/20 relative">
+                            <span class="absolute top-3 right-3 flex h-3 w-3">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                            </span>
+                        </div>
+                        <div class="px-6 pb-6 relative">
+                            <div class="w-24 h-24 rounded-2xl bg-white dark:bg-slate-800 border-4 border-white dark:border-slate-800 shadow-xl absolute -top-12 flex justify-center items-end overflow-hidden ai-thinking">
+                                <img src="https://api.dicebear.com/7.x/micah/svg?seed=DesignerPurple&backgroundColor=transparent" alt="Avatar" class="w-full h-full object-cover ai-eye-blink">
+                            </div>
+                            <div class="mt-14">
+                                <h3 class="text-lg font-bold text-purple-500">Product Designer</h3>
+                                <p class="text-xs text-slate-500 uppercase tracking-wide">คิดฟีเจอร์และแก้ Pain Point</p>
+                                
+                                <div class="mt-4 grid grid-cols-2 gap-2 text-sm">
+                                    <div class="bg-white/40 dark:bg-slate-900/40 p-2 rounded-lg text-center">
+                                        <i class="fa-solid fa-face-grin-stars mood-excellent text-lg text-purple-500"></i>
+                                        <p class="text-[10px] text-slate-500 mt-1">อารมณ์</p>
+                                    </div>
+                                    <div class="bg-white/40 dark:bg-slate-900/40 p-2 rounded-lg text-center">
+                                        <i class="fa-solid fa-bolt text-purple-500 text-lg"></i>
+                                        <p class="text-[10px] text-slate-500 mt-1">พลังงาน 88%</p>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <p class="text-xs text-slate-500 mb-1">งานปัจจุบัน:</p>
+                                    <p class="text-sm truncate font-medium text-slate-700 dark:text-slate-300"><i class="fa-solid fa-pen-nib mr-2 text-purple-400"></i>ออกแบบ UX ระบบใหม่</p>
+                                </div>
+                                <div class="mt-4 pt-4 border-t border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center text-xs">
+                                    <span class="bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400 px-2 py-1 rounded">Working...</span>
+                                    <button class="text-purple-500 hover:underline">ดูข้อมูลเชิงลึก &rarr;</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI 3: Content Writer (Green) -->
+                    <div class="glass-card overflow-hidden hover:shadow-emerald-500/20 transition-all cursor-pointer group" onclick="openAIDetail('AI-03')">
+                        <div class="h-24 bg-gradient-to-r from-emerald-600/40 to-emerald-400/20 relative">
+                            <span class="absolute top-3 right-3 flex h-3 w-3">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                            </span>
+                        </div>
+                        <div class="px-6 pb-6 relative">
+                            <div class="w-24 h-24 rounded-2xl bg-white dark:bg-slate-800 border-4 border-white dark:border-slate-800 shadow-xl absolute -top-12 flex justify-center items-end overflow-hidden ai-working">
+                                <img src="https://api.dicebear.com/7.x/micah/svg?seed=ContentGreen&backgroundColor=transparent" alt="Avatar" class="w-full h-full object-cover ai-eye-blink">
+                            </div>
+                            <div class="mt-14">
+                                <h3 class="text-lg font-bold text-emerald-500">Content Writer</h3>
+                                <p class="text-xs text-slate-500 uppercase tracking-wide">เขียน Blog, Caption และ SEO</p>
+                                
+                                <div class="mt-4 grid grid-cols-2 gap-2 text-sm">
+                                    <div class="bg-white/40 dark:bg-slate-900/40 p-2 rounded-lg text-center">
+                                        <i class="fa-solid fa-face-meh mood-good text-lg"></i>
+                                        <p class="text-[10px] text-slate-500 mt-1">อารมณ์</p>
+                                    </div>
+                                    <div class="bg-white/40 dark:bg-slate-900/40 p-2 rounded-lg text-center">
+                                        <i class="fa-solid fa-bolt text-emerald-500 text-lg"></i>
+                                        <p class="text-[10px] text-slate-500 mt-1">พลังงาน 65%</p>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <p class="text-xs text-slate-500 mb-1">งานปัจจุบัน:</p>
+                                    <p class="text-sm truncate font-medium text-slate-700 dark:text-slate-300"><i class="fa-solid fa-keyboard mr-2 text-emerald-400"></i>ดราฟต์บทความ Facebook Ads</p>
+                                </div>
+                                <div class="mt-4 pt-4 border-t border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center text-xs">
+                                    <span class="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400 px-2 py-1 rounded">Typing...</span>
+                                    <button class="text-emerald-500 hover:underline">ดูข้อมูลเชิงลึก &rarr;</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI 4: Marketing Manager (Red) -->
+                    <div class="glass-card overflow-hidden hover:shadow-red-500/20 transition-all cursor-pointer group" onclick="openAIDetail('AI-04')">
+                        <div class="h-24 bg-gradient-to-r from-red-600/40 to-red-400/20 relative">
+                            <span class="absolute top-3 right-3 flex h-3 w-3">
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span> <!-- ไม่กระพริบแปลว่าหลับ/ไม่ว่าง -->
+                            </span>
+                        </div>
+                        <div class="px-6 pb-6 relative">
+                            <div class="w-24 h-24 rounded-2xl bg-white dark:bg-slate-800 border-4 border-white dark:border-slate-800 shadow-xl absolute -top-12 flex justify-center items-end overflow-hidden ai-sleeping">
+                                <img src="https://api.dicebear.com/7.x/micah/svg?seed=MarketRed&backgroundColor=transparent" alt="Avatar" class="w-full h-full object-cover">
+                            </div>
+                            <div class="mt-14">
+                                <h3 class="text-lg font-bold text-red-500">Marketing Manager</h3>
+                                <p class="text-xs text-slate-500 uppercase tracking-wide">แคมเปญ, โปรโมชัน, ยอดขาย</p>
+                                
+                                <div class="mt-4 grid grid-cols-2 gap-2 text-sm">
+                                    <div class="bg-white/40 dark:bg-slate-900/40 p-2 rounded-lg text-center">
+                                        <i class="fa-solid fa-face-dizzy mood-tired text-lg"></i>
+                                        <p class="text-[10px] text-slate-500 mt-1">อารมณ์</p>
+                                    </div>
+                                    <div class="bg-white/40 dark:bg-slate-900/40 p-2 rounded-lg text-center">
+                                        <i class="fa-solid fa-battery-quarter text-red-500 text-lg"></i>
+                                        <p class="text-[10px] text-slate-500 mt-1">พลังงาน 15%</p>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <p class="text-xs text-slate-500 mb-1">งานปัจจุบัน:</p>
+                                    <p class="text-sm truncate font-medium text-slate-400 dark:text-slate-500"><i class="fa-solid fa-bed mr-2"></i>กำลังพักผ่อน (Recharging)</p>
+                                </div>
+                                <div class="mt-4 pt-4 border-t border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center text-xs">
+                                    <span class="bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400 px-2 py-1 rounded">Sleeping...</span>
+                                    <button class="text-red-500 hover:underline">ดูข้อมูลเชิงลึก &rarr;</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI 5: Project Assistant (Yellow) -->
+                    <div class="glass-card overflow-hidden hover:shadow-amber-500/20 transition-all cursor-pointer group" onclick="openAIDetail('AI-05')">
+                        <div class="h-24 bg-gradient-to-r from-amber-600/40 to-amber-400/20 relative">
+                            <span class="absolute top-3 right-3 flex h-3 w-3">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                            </span>
+                        </div>
+                        <div class="px-6 pb-6 relative">
+                            <div class="w-24 h-24 rounded-2xl bg-white dark:bg-slate-800 border-4 border-white dark:border-slate-800 shadow-xl absolute -top-12 flex justify-center items-end overflow-hidden ai-idle">
+                                <img src="https://api.dicebear.com/7.x/micah/svg?seed=AssistantYellow&backgroundColor=transparent" alt="Avatar" class="w-full h-full object-cover ai-eye-blink">
+                            </div>
+                            <div class="mt-14">
+                                <h3 class="text-lg font-bold text-amber-500">Project Assistant</h3>
+                                <p class="text-xs text-slate-500 uppercase tracking-wide">จัดการคิวงาน, แจ้งเตือน, ไทม์ไลน์</p>
+                                
+                                <div class="mt-4 grid grid-cols-2 gap-2 text-sm">
+                                    <div class="bg-white/40 dark:bg-slate-900/40 p-2 rounded-lg text-center">
+                                        <i class="fa-solid fa-face-smile-beam mood-excellent text-lg"></i>
+                                        <p class="text-[10px] text-slate-500 mt-1">อารมณ์</p>
+                                    </div>
+                                    <div class="bg-white/40 dark:bg-slate-900/40 p-2 rounded-lg text-center">
+                                        <i class="fa-solid fa-bolt text-amber-500 text-lg"></i>
+                                        <p class="text-[10px] text-slate-500 mt-1">พลังงาน 100%</p>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <p class="text-xs text-slate-500 mb-1">งานปัจจุบัน:</p>
+                                    <p class="text-sm truncate font-medium text-slate-700 dark:text-slate-300"><i class="fa-solid fa-calendar-check mr-2 text-amber-400"></i>สรุปการประชุมประจำสัปดาห์</p>
+                                </div>
+                                <div class="mt-4 pt-4 border-t border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center text-xs">
+                                    <span class="bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400 px-2 py-1 rounded">Online / Idle</span>
+                                    <button class="text-amber-500 hover:underline">ดูข้อมูลเชิงลึก &rarr;</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- VIEW: AI DETAIL (หน้าข้อมูลเชิงลึก Profile, Memory, Analytics ของแต่ละคน) -->
+            <!-- ========================================== -->
+            <div id="view-ai_detail" class="view-section hidden animate-fade-in flex flex-col h-full">
+                <!-- Header Control -->
+                <div class="flex justify-between items-center mb-6">
+                    <button onclick="navigate('ai_team')" class="px-4 py-2 bg-white/40 dark:bg-slate-800/50 hover:bg-white/80 transition-all rounded-lg text-sm shadow-sm flex items-center glass-card">
+                        <i class="fa-solid fa-arrow-left mr-2"></i> กลับไปหน้าทีม AI
+                    </button>
+                    <div class="flex gap-2">
+                        <button class="px-4 py-2 bg-brand-500 text-white hover:bg-brand-600 transition-all rounded-lg text-sm shadow-lg shadow-brand-500/30 flex items-center">
+                            <i class="fa-solid fa-comment-dots mr-2"></i> สั่งงานด่วน
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Main Grid Layout -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 overflow-y-auto pb-4 custom-scrollbar">
+                    
+                    <!-- Left Col: Profile & Status -->
+                    <div class="lg:col-span-1 space-y-6">
+                        <!-- AI Identity Card -->
+                        <div class="glass-card p-6 text-center relative overflow-hidden" id="detail-card-identity">
+                            <!-- Background Header Graphic -->
+                            <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-blue-500/30 to-purple-500/30"></div>
+                            
+                            <!-- Avatar Animated -->
+                            <div class="w-32 h-32 rounded-full mx-auto relative z-10 bg-white dark:bg-slate-800 border-4 border-white dark:border-slate-800 shadow-xl flex items-end justify-center overflow-hidden ai-thinking mt-8">
+                                <img id="detail-ai-avatar" src="https://api.dicebear.com/7.x/micah/svg?seed=MarketBlue" class="w-full h-full object-cover ai-eye-blink">
+                            </div>
+                            
+                            <h2 id="detail-ai-name" class="text-2xl font-bold mt-4">Market Analyst</h2>
+                            <p id="detail-ai-role" class="text-sm text-brand-500 font-medium">Business Intelligence Unit</p>
+                            
+                            <div class="mt-6 text-left space-y-4">
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span class="text-slate-500">พลังงาน (Energy)</span>
+                                        <span class="font-bold text-emerald-500">95%</span>
+                                    </div>
+                                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                                        <div class="bg-emerald-500 h-2 rounded-full energy-bar-fill" style="width: 95%"></div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-slate-50/50 dark:bg-slate-800/50 rounded-xl">
+                                    <span class="text-xs text-slate-500">สถานะปัจจุบัน</span>
+                                    <span class="text-xs font-bold bg-blue-100 text-blue-600 dark:bg-blue-900/40 px-2 py-1 rounded flex items-center">
+                                        <i class="fa-solid fa-spinner fa-spin mr-2"></i> Thinking
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Skills & Experience -->
+                        <div class="glass-card p-6">
+                            <h3 class="font-bold text-lg mb-4 border-b border-slate-200/50 dark:border-slate-700/50 pb-2">Skills & Experience</h3>
+                            <div class="space-y-3">
+                                <!-- Skill 1 -->
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1"><span class="font-medium">Market Research</span><span>Lv.99</span></div>
+                                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5"><div class="bg-brand-500 h-1.5 rounded-full" style="width: 99%"></div></div>
+                                </div>
+                                <!-- Skill 2 -->
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1"><span class="font-medium">SEO Optimization</span><span>Lv.85</span></div>
+                                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5"><div class="bg-brand-500 h-1.5 rounded-full" style="width: 85%"></div></div>
+                                </div>
+                                <!-- Skill 3 -->
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1"><span class="font-medium">Trend Analysis</span><span>Lv.92</span></div>
+                                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5"><div class="bg-brand-500 h-1.5 rounded-full" style="width: 92%"></div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Col: Memory, Current Tasks, Analytics -->
+                    <div class="lg:col-span-2 space-y-6 flex flex-col">
+                        
+                        <!-- Top Row: Analytics & KPIs -->
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="glass-card p-4 text-center">
+                                <p class="text-xs text-slate-500">งานที่สำเร็จ (เดือนนี้)</p>
+                                <h4 class="text-2xl font-bold text-emerald-500 mt-1">128</h4>
+                            </div>
+                            <div class="glass-card p-4 text-center">
+                                <p class="text-xs text-slate-500">ความแม่นยำ</p>
+                                <h4 class="text-2xl font-bold text-brand-500 mt-1">98.5%</h4>
+                            </div>
+                            <div class="glass-card p-4 text-center">
+                                <p class="text-xs text-slate-500">ความรู้ในระบบ (Memory)</p>
+                                <h4 class="text-2xl font-bold text-purple-500 mt-1">1.2k</h4>
+                            </div>
+                        </div>
+
+                        <!-- Current Task Progress -->
+                        <div class="glass-card p-6">
+                            <h3 class="font-bold text-lg mb-4 flex items-center">
+                                <i class="fa-solid fa-bars-progress text-brand-500 mr-2"></i> ความคืบหน้างางานปัจจุบัน
+                            </h3>
+                            <div class="border border-slate-200 dark:border-slate-700 rounded-xl p-4 bg-white/30 dark:bg-slate-900/20">
+                                <h4 class="font-bold text-sm">วิเคราะห์เทรนด์คู่แข่ง Q3</h4>
+                                <p class="text-xs text-slate-500 mt-1">ดึงข้อมูลจากสื่อโซเชียลของคู่แข่งหลัก 3 เจ้าเพื่อเปรียบเทียบแคมเปญล่าสุด</p>
+                                <div class="mt-4 flex justify-between text-xs mb-1">
+                                    <span class="text-slate-500">ความคืบหน้า</span>
+                                    <span class="font-bold">45%</span>
+                                </div>
+                                <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                                    <div class="bg-gradient-to-r from-blue-400 to-brand-500 h-2 rounded-full relative overflow-hidden" style="width: 45%">
+                                        <div class="absolute inset-0 bg-white/30 skew-x-12 animate-slide-right"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Long-term Memory & History (Log) -->
+                        <div class="glass-card p-6 flex-1 flex flex-col min-h-[300px]">
+                            <h3 class="font-bold text-lg mb-4 flex items-center">
+                                <i class="fa-solid fa-brain text-purple-500 mr-2"></i> ความทรงจำและประวัติการทำงาน (Memory)
+                            </h3>
+                            <div class="flex-1 overflow-y-auto space-y-4 pr-2">
+                                <!-- Memory Item 1 -->
+                                <div class="flex gap-4 border-l-2 border-brand-500 pl-4 relative">
+                                    <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand-500 border-2 border-white dark:border-slate-800"></div>
+                                    <div>
+                                        <p class="text-xs text-slate-400 mb-1">วันนี้ 14:30 น.</p>
+                                        <p class="text-sm font-medium">เรียนรู้รูปแบบอัลกอริทึมใหม่ของ Facebook</p>
+                                        <p class="text-xs text-slate-500 mt-1 bg-slate-100 dark:bg-slate-800 p-2 rounded-lg">บันทึกคีย์เวิร์ดที่ประสิทธิภาพดีขึ้น 20% เข้าสู่ Knowledge Base</p>
+                                    </div>
+                                </div>
+                                <!-- Memory Item 2 -->
+                                <div class="flex gap-4 border-l-2 border-slate-200 dark:border-slate-700 pl-4 relative">
+                                    <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-slate-300 dark:bg-slate-600 border-2 border-white dark:border-slate-800"></div>
+                                    <div>
+                                        <p class="text-xs text-slate-400 mb-1">เมื่อวาน 09:15 น.</p>
+                                        <p class="text-sm font-medium">ส่งมอบรายงานวิเคราะห์ตลาดประจำสัปดาห์</p>
+                                    </div>
+                                </div>
+                                <!-- Memory Item 3 -->
+                                <div class="flex gap-4 border-l-2 border-slate-200 dark:border-slate-700 pl-4 relative">
+                                    <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-slate-300 dark:bg-slate-600 border-2 border-white dark:border-slate-800"></div>
+                                    <div>
+                                        <p class="text-xs text-slate-400 mb-1">15 ก.ค. 2026</p>
+                                        <p class="text-sm font-medium">ได้รับการอัปเดตโมเดล (Tuned) ด้าน SEO</p>
+                                        <p class="text-xs text-slate-500 mt-1 bg-slate-100 dark:bg-slate-800 p-2 rounded-lg">เพิ่มความสามารถในการวิเคราะห์ Intent ของ User จาก Keyword หางยาว</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <!-- ========================================== -->
+            <!-- VIEW: AI WORKFLOW (ระบบกระบวนการทำงานอัตโนมัติ) -->
+            <!-- ========================================== -->
+            <div id="view-workflow" class="view-section hidden animate-fade-in space-y-6 flex flex-col h-full">
+                
+                <!-- Workflow Header & Analytics Quick Stats -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2">
+                    <div>
+                        <h2 class="text-2xl font-bold">กระบวนการทำงาน (AI Workflow)</h2>
+                        <p class="text-sm text-slate-500">จัดการ Pipeline แบบอัตโนมัติ และติดตามสถานะงานของ AI แต่ละแผนก</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="px-4 py-2 bg-white/40 dark:bg-slate-800/50 hover:bg-white/80 transition-all rounded-lg text-sm shadow-sm flex items-center glass-card">
+                            <i class="fa-solid fa-sliders mr-2"></i> กฎเกณฑ์ Automation
+                        </button>
+                        <button class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white transition-all rounded-lg text-sm shadow-lg shadow-brand-500/30 flex items-center">
+                            <i class="fa-solid fa-plus mr-2"></i> สร้าง Workflow ใหม่
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Workflow Analytics Cards -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="glass-card p-4">
+                        <p class="text-xs text-slate-500 font-medium">Workflow ที่กำลังรัน</p>
+                        <h3 class="text-2xl font-bold mt-1 text-blue-500">12</h3>
+                    </div>
+                    <div class="glass-card p-4">
+                        <p class="text-xs text-slate-500 font-medium">รอการอนุมัติ (Pending)</p>
+                        <h3 class="text-2xl font-bold mt-1 text-amber-500">3</h3>
+                    </div>
+                    <div class="glass-card p-4">
+                        <p class="text-xs text-slate-500 font-medium">ตีกลับ (Rejected/Back)</p>
+                        <h3 class="text-2xl font-bold mt-1 text-red-500">1</h3>
+                    </div>
+                    <div class="glass-card p-4">
+                        <p class="text-xs text-slate-500 font-medium">เวลาเฉลี่ยต่อโปรเจกต์</p>
+                        <h3 class="text-2xl font-bold mt-1 text-emerald-500">4.2 <span class="text-sm font-normal text-slate-500">ชม.</span></h3>
+                    </div>
+                </div>
+
+                <!-- Main Workflow Area Split -->
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 flex-1 overflow-hidden min-h-[600px]">
+                    
+                    <!-- Left Column: Active Workflows List -->
+                    <div class="xl:col-span-1 glass-card flex flex-col overflow-hidden">
+                        <div class="p-4 border-b border-slate-200/50 dark:border-slate-700/50 bg-white/30 dark:bg-slate-800/30">
+                            <h3 class="font-bold text-sm">รายการ Workflow ปัจจุบัน</h3>
+                            <div class="relative w-full mt-3">
+                                <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-xs"></i>
+                                <input type="text" placeholder="ค้นหาโปรเจกต์..." class="w-full bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg py-1.5 pl-8 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">
+                            </div>
+                        </div>
+                        
+                        <div class="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar">
+                            <!-- Workflow Item 1 (Active) -->
+                            <div class="p-3 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/50 rounded-xl cursor-pointer hover:shadow-md transition-all relative overflow-hidden">
+                                <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="font-bold text-sm text-slate-800 dark:text-slate-200">แคมเปญเปิดตัว Q4</h4>
+                                    <span class="text-[10px] bg-blue-100 text-blue-600 dark:bg-blue-900/40 px-2 py-0.5 rounded font-bold">40%</span>
+                                </div>
+                                <p class="text-xs text-slate-500 mb-3">อยู่กับ: <span class="font-medium text-purple-500">Product Designer</span></p>
+                                <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5">
+                                    <div class="bg-blue-500 h-1.5 rounded-full" style="width: 40%"></div>
+                                </div>
+                            </div>
+
+                            <!-- Workflow Item 2 (Waiting Approval) -->
+                            <div class="p-3 bg-white/40 dark:bg-slate-800/40 border border-slate-200/50 dark:border-slate-700/50 rounded-xl cursor-pointer hover:shadow-md transition-all relative overflow-hidden opacity-70">
+                                <div class="absolute left-0 top-0 bottom-0 w-1 bg-amber-500"></div>
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="font-bold text-sm text-slate-800 dark:text-slate-200">SEO Blog (ประจำเดือน)</h4>
+                                    <span class="text-[10px] bg-amber-100 text-amber-600 dark:bg-amber-900/40 px-2 py-0.5 rounded font-bold">60%</span>
+                                </div>
+                                <p class="text-xs text-slate-500 mb-3">สถานะ: <span class="font-medium text-amber-500">รออนุมัติ (Content)</span></p>
+                                <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5">
+                                    <div class="bg-amber-500 h-1.5 rounded-full" style="width: 60%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Workflow Detail & Timeline -->
+                    <div class="xl:col-span-2 flex flex-col h-full gap-4">
+                        
+                        <!-- Top Detail: Progress Timeline (Visual Pipeline) -->
+                        <div class="glass-card p-6 overflow-x-auto">
+                            <h3 class="font-bold text-lg mb-6">ความคืบหน้า Workflow: แคมเปญเปิดตัว Q4</h3>
+                            
+                            <div class="relative flex justify-between items-center w-full min-w-[600px] mt-4 mb-4 px-4">
+                                <!-- Connecting Line (Background) -->
+                                <div class="absolute left-8 right-8 top-1/2 transform -translate-y-1/2 h-1 bg-slate-200 dark:bg-slate-700 z-0 rounded-full"></div>
+                                <!-- Connecting Line (Progress) -->
+                                <div class="absolute left-8 top-1/2 transform -translate-y-1/2 h-1 bg-brand-500 z-0 rounded-full transition-all duration-1000" style="width: 25%;"></div>
+
+                                <!-- Node 1: Analyst (Done) -->
+                                <div class="relative z-10 flex flex-col items-center group">
+                                    <div class="w-10 h-10 rounded-full bg-brand-500 text-white flex items-center justify-center shadow-lg shadow-brand-500/40 border-4 border-white dark:border-slate-800">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                    <p class="text-xs font-bold mt-2 text-slate-800 dark:text-slate-200">Market Analyst</p>
+                                    <p class="text-[10px] text-brand-500">เสร็จสิ้น</p>
+                                </div>
+
+                                <!-- Node 2: Designer (Active) -->
+                                <div class="relative z-10 flex flex-col items-center group">
+                                    <div class="w-12 h-12 rounded-full bg-purple-500 text-white flex items-center justify-center shadow-lg shadow-purple-500/50 border-4 border-white dark:border-slate-800 animate-pulse">
+                                        <i class="fa-solid fa-pen-nib"></i>
+                                    </div>
+                                    <p class="text-xs font-bold mt-2 text-purple-500">Product Designer</p>
+                                    <p class="text-[10px] text-purple-400">กำลังทำงาน...</p>
+                                </div>
+
+                                <!-- Node 3: Writer (Pending) -->
+                                <div class="relative z-10 flex flex-col items-center group opacity-50">
+                                    <div class="w-10 h-10 rounded-full bg-white dark:bg-slate-800 text-slate-400 border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center">
+                                        <i class="fa-solid fa-keyboard"></i>
+                                    </div>
+                                    <p class="text-xs font-bold mt-2 text-slate-500">Content Writer</p>
+                                    <p class="text-[10px] text-slate-400">รอรับงาน</p>
+                                </div>
+
+                                <!-- Node 4: Manager (Pending) -->
+                                <div class="relative z-10 flex flex-col items-center group opacity-50">
+                                    <div class="w-10 h-10 rounded-full bg-white dark:bg-slate-800 text-slate-400 border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center">
+                                        <i class="fa-solid fa-bullhorn"></i>
+                                    </div>
+                                    <p class="text-xs font-bold mt-2 text-slate-500">Marketing Manager</p>
+                                    <p class="text-[10px] text-slate-400">รอรับงาน</p>
+                                </div>
+
+                                <!-- Node 5: Assistant (Pending) -->
+                                <div class="relative z-10 flex flex-col items-center group opacity-50">
+                                    <div class="w-10 h-10 rounded-full bg-white dark:bg-slate-800 text-slate-400 border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center">
+                                        <i class="fa-solid fa-calendar-check"></i>
+                                    </div>
+                                    <p class="text-xs font-bold mt-2 text-slate-500">Project Assistant</p>
+                                    <p class="text-[10px] text-slate-400">ปิดโปรเจกต์</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bottom Section: Approval & History Area -->
+                        <div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            
+                            <!-- Control Panel (Approval & Settings) -->
+                            <div class="glass-card flex flex-col">
+                                <div class="p-4 border-b border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center bg-white/30 dark:bg-slate-800/30">
+                                    <h3 class="font-bold text-sm"><i class="fa-solid fa-gamepad mr-2 text-purple-500"></i>ศูนย์ควบคุม (Control Center)</h3>
+                                    <!-- Manual Override Toggle -->
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-xs text-slate-500 font-medium">Manual Override</span>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" value="" class="sr-only peer" checked>
+                                            <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-purple-500"></div>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="p-5 flex-1 flex flex-col justify-center space-y-4">
+                                    <div class="bg-purple-50/50 dark:bg-purple-900/10 p-4 rounded-xl border border-purple-100 dark:border-purple-800/30 text-center">
+                                        <p class="text-xs text-slate-500 mb-1">ผู้รับผิดชอบปัจจุบัน</p>
+                                        <h4 class="font-bold text-purple-600 dark:text-purple-400 text-lg">Product Designer</h4>
+                                        <p class="text-xs mt-2 text-slate-600 dark:text-slate-400">ระบบรอการอนุมัติ (Approve) จากคุณก่อนส่งงานต่อให้ Content Writer ตามกฎ Manual Override</p>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-2 gap-3 mt-2">
+                                        <button class="py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-sm font-medium transition-all shadow-md flex items-center justify-center">
+                                            <i class="fa-solid fa-check mr-2"></i> Approve & Continue
+                                        </button>
+                                        <button class="py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-all shadow-md flex items-center justify-center">
+                                            <i class="fa-solid fa-arrow-rotate-left mr-2"></i> Reject & Back
+                                        </button>
+                                        <button class="py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-all shadow-md flex items-center justify-center col-span-2 mt-1">
+                                            <i class="fa-solid fa-user-plus mr-2"></i> Manual Assign (เปลี่ยนคนรับงาน)
+                                        </button>
+                                        <button class="py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-medium transition-all flex items-center justify-center col-span-2 mt-1">
+                                            <i class="fa-solid fa-flag-checkered mr-2"></i> Finish Workflow ทันที
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- History & Activity Log -->
+                            <div class="glass-card flex flex-col">
+                                <div class="p-4 border-b border-slate-200/50 dark:border-slate-700/50 bg-white/30 dark:bg-slate-800/30 flex justify-between items-center">
+                                    <h3 class="font-bold text-sm"><i class="fa-solid fa-clock-rotate-left mr-2 text-brand-500"></i>Activity & Comments</h3>
+                                </div>
+                                <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                                    <div class="relative border-l-2 border-slate-200 dark:border-slate-700 ml-3 space-y-6">
+                                        
+                                        <!-- Log 1: Active -->
+                                        <div class="relative">
+                                            <div class="absolute -left-[25px] top-0 w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/50 border-2 border-white dark:border-slate-800 flex items-center justify-center text-purple-500 text-xs shadow-sm">
+                                                <i class="fa-solid fa-pen-nib"></i>
+                                            </div>
+                                            <div class="ml-6 bg-white/50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                                                <p class="text-[10px] text-slate-400 mb-1">วันนี้ 10:15 น.</p>
+                                                <p class="text-sm font-medium text-purple-600 dark:text-purple-400">Product Designer ได้รับมอบหมายงาน</p>
+                                                <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">"กำลังออกแบบ Wireframe เบื้องต้นอิงจากข้อมูล Market Research"</p>
+                                            </div>
+                                        </div>
+
+                                        <!-- Log 2: User Action -->
+                                        <div class="relative">
+                                            <div class="absolute -left-[25px] top-0 w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 border-2 border-white dark:border-slate-800 flex items-center justify-center text-brand-500 text-xs shadow-sm">
+                                                <i class="fa-solid fa-user-tie"></i>
+                                            </div>
+                                            <div class="ml-6">
+                                                <p class="text-[10px] text-slate-400 mb-1">วันนี้ 10:14 น.</p>
+                                                <p class="text-sm font-medium"><span class="font-bold">Admin</span> กด <span class="text-emerald-500">Approve</span> งาน</p>
+                                                <p class="text-xs text-slate-500 mt-1 italic">"ข้อมูลตลาดโอเคแล้ว ให้ฝั่ง Design ลุยต่อได้เลย"</p>
+                                            </div>
+                                        </div>
+
+                                        <!-- Log 3: Completed Stage -->
+                                        <div class="relative">
+                                            <div class="absolute -left-[25px] top-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 border-2 border-white dark:border-slate-800 flex items-center justify-center text-blue-500 text-xs shadow-sm">
+                                                <i class="fa-solid fa-magnifying-glass-chart"></i>
+                                            </div>
+                                            <div class="ml-6 bg-white/50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50 opacity-75">
+                                                <p class="text-[10px] text-slate-400 mb-1">เมื่อวาน 15:30 น.</p>
+                                                <p class="text-sm font-medium text-blue-600 dark:text-blue-400">Market Analyst ทำงานเสร็จสิ้น</p>
+                                                <p class="text-xs text-slate-500 mt-1">แนบไฟล์: Market_Trend_Q4.pdf</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Input Comment Box -->
+                                <div class="p-3 border-t border-slate-200/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-900/50">
+                                    <div class="relative">
+                                        <input type="text" placeholder="พิมพ์ข้อความตอบกลับหรือสั่งการ..." class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-2 pl-3 pr-10 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                        <button class="absolute right-2 top-1/2 transform -translate-y-1/2 text-brand-500 hover:text-brand-600">
+                                            <i class="fa-solid fa-paper-plane text-sm"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- ========================================== -->
+            <!-- VIEW: GENERIC TABLE TEMPLATE (ใช้ร่วมกันหลายหน้า) -->
+            <!-- สำหรับ Workflow, AI Team, Prompt, Knowledge, Reports, Settings, Notifications, Calendar -->
+            <!-- ========================================== -->
+            <div id="view-generic" class="view-section hidden animate-fade-in space-y-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 id="generic-title" class="text-2xl font-bold">...</h2>
+                        <p id="generic-subtitle" class="text-sm text-slate-500">...</p>
+                    </div>
+                    <button id="generic-add-btn" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white transition-all rounded-lg text-sm shadow-lg shadow-brand-500/30 flex items-center">
+                        <i class="fa-solid fa-plus mr-2"></i> เพิ่มข้อมูล
+                    </button>
+                </div>
+                
+                <div class="glass-card overflow-hidden">
+                    <div class="p-4 border-b border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center bg-white/30 dark:bg-slate-800/30">
+                        <div class="relative w-full max-w-xs">
+                            <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-sm"></i>
+                            <input type="text" id="search-generic" placeholder="ค้นหา..." class="w-full bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg py-1.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/50">
+                        </div>
+                        <button id="generic-refresh-btn" class="text-slate-500 hover:text-brand-500 p-2"><i class="fa-solid fa-rotate-right"></i></button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse" id="generic-table">
+                            <thead id="generic-thead">
+                                <!-- Headers injected via JS -->
+                            </thead>
+                            <tbody id="generic-tbody" class="divide-y divide-slate-200/30 dark:divide-slate-700/30 text-sm">
+                                <!-- Data injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="generic-pagination" class="p-4 border-t border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center text-sm"></div>
+                </div>
+            </div>
+
+        </div> <!-- End Viewport -->
+    </main>
+
+    <!-- ========================================== -->
+    <!-- GLOBAL COMPONENTS (Modals & Toasts) -->
+    <!-- ========================================== -->
+
+    <!-- Dynamic Modal (Glassmorphism Style) -->
+    <div id="global-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
+        <div class="glass-card bg-white/80 dark:bg-slate-800/90 w-full max-w-lg rounded-2xl shadow-2xl relative z-10 transform transition-all animate-slide-up overflow-hidden flex flex-col max-h-[90vh]">
+            
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-white/50 dark:bg-slate-900/50">
+                <h3 class="text-lg font-bold" id="modal-title">หัวข้อ Modal</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-red-500 transition-colors">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Modal Body (Form rendering area) -->
+            <div class="p-6 overflow-y-auto custom-scrollbar" id="modal-body">
+                <!-- Form inputs injected dynamically via JS based on Schema -->
+                <div class="flex justify-center items-center py-8">
+                    <i class="fa-solid fa-spinner fa-spin text-brand-500 text-2xl"></i>
+                </div>
+            </div>
+            
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex justify-end space-x-3 bg-slate-50/50 dark:bg-slate-900/50">
+                <button onclick="closeModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                    ยกเลิก
+                </button>
+                <button id="modal-save-btn" class="px-4 py-2 rounded-lg text-sm font-medium text-white bg-brand-500 hover:bg-brand-600 shadow-md shadow-brand-500/30 transition-all flex items-center">
+                    <i class="fa-solid fa-save mr-2"></i> บันทึกข้อมูล
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container (Bottom Right) -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-[60] flex flex-col gap-3 pointer-events-none">
+        <!-- Toasts injected here -->
+    </div>
+    <!-- ========================================== -->
+    <!-- JAVASCRIPT ENGINE (API, Routing, UI Logic) -->
+    <!-- ========================================== -->
+    <script>
+        // 1. CONFIGURATION & STATE MANAGEMENT
+        // =========================================================================
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzKWH_JBWHjmG3dRd3CAulDQ-Sn9FwV2GZYd-5lEQytjQnHJg_KcrTDrdRn2um6_QlL2w/exec'; // <<<<< สำคัญ: นำลิงก์จาก GAS มาใส่ตรงนี้
+        
+        const AppState = {
+            currentUser: null,
+            currentView: 'dashboard',
+            charts: {}, // สำหรับเก็บ instance ของกราฟเพื่อป้องกัน Memory Leak
+            theme: localStorage.getItem('theme') || 'dark',
+            searchTimeout: null,
+            kanbanDraggedItem: null
+        };
+
+        // 2. SYSTEM INITIALIZATION
+        // =========================================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            applyTheme(AppState.theme);
+            
+            // จำลองการ Login สำหรับ Demo (ในระบบจริงควรมีหน้า Login)
+            authenticateUser('jarvis.ceo@ai-biz.local').then(success => {
+                if (success) {
+                    navigate('dashboard');
+                    document.getElementById('global-loader').style.opacity = '0';
+                    setTimeout(() => document.getElementById('global-loader').classList.add('hidden'), 300);
+                    showToast('เข้าสู่ระบบสำเร็จ', `ยินดีต้อนรับ ${AppState.currentUser.name}`, 'success');
+                } else {
+                    showToast('System Error', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error');
+                }
+            });
+        });
+
+        // 3. CORE API ENGINE (CORS & Error Handling)
+        // =========================================================================
+        /**
+         * ฟังก์ชันส่งข้อมูลไปยัง Google Apps Script (GAS)
+         * ใช้ text/plain เพื่อหลีกเลี่ยง CORS Preflight Options Request 
+         */
+        async function apiCall(action, params = {}) {
+            try {
+                const payload = { action: action, params: params, user: AppState.currentUser ? AppState.currentUser.id : 'System' };
+                
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                const result = await response.json();
+                
+                if (!result.success) throw new Error(result.message);
+                return result.data;
+            } catch (error) {
+                console.error(`[API Error - ${action}]:`, error);
+                showToast('การเชื่อมต่อล้มเหลว', error.message, 'error');
+                return null;
+            }
+        }
+
+        async function authenticateUser(email) {
+            const data = await apiCall('login', { email: email });
+            if (data && data.profile) {
+                AppState.currentUser = data.profile;
+                document.getElementById('user-display-name').textContent = data.profile.name;
+                document.getElementById('user-display-role').textContent = data.profile.role;
+                return true;
+            }
+            return false;
+        }
+
+        // 4. SPA ROUTING & NAVIGATION
+        // =========================================================================
+        function navigate(viewName) {
+            // ซ่อนทุกหน้า
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            // รีเซ็ตปุ่มเมนู
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-white/50', 'dark:bg-slate-800/80', 'text-brand-600', 'dark:text-brand-400', 'shadow-sm');
+                btn.classList.add('opacity-80');
+            });
+
+            // แสดงหน้าที่เลือก
+            const targetView = document.getElementById(`view-${viewName}`);
+            if (targetView) targetView.classList.remove('hidden');
+
+            // ไฮไลต์เมนู
+            const targetBtn = document.querySelector(`.nav-btn[data-target="${viewName}"]`);
+            if (targetBtn) {
+                targetBtn.classList.remove('opacity-80');
+                targetBtn.classList.add('bg-white/50', 'dark:bg-slate-800/80', 'text-brand-600', 'dark:text-brand-400', 'shadow-sm');
+            }
+
+            AppState.currentView = viewName;
+            
+            // ปิด Sidebar สำหรับ Mobile
+            const overlay = document.getElementById('mobile-overlay');
+            if (overlay && !overlay.classList.contains('hidden')) toggleSidebar();
+
+            // โหลดข้อมูลตามหน้า
+            loadViewData(viewName);
+        }
+
+        function loadViewData(viewName) {
+            showGlobalLoading(true);
+            switch (viewName) {
+                case 'dashboard': loadDashboardData(); break;
+                case 'projects': fetchGenericData('projects'); break;
+                case 'tasks': fetchGenericData('tasks'); break;
+                case 'kanban': loadKanbanData(); break;
+                case 'reports': renderAnalyticsCharts(); break;
+                // AI Team, Workflow, Chat ใช้ Data ผูกกับ DOM ไปแล้วเบื้องต้นใน Demo นี้
+            }
+            setTimeout(() => showGlobalLoading(false), 500); // จำลอง delay เครือข่ายให้ UI Smooth
+        }
+
+        // 5. DASHBOARD MODULE
+        // =========================================================================
+        async function loadDashboardData() {
+            const data = await apiCall('dashboard');
+            if (!data) return;
+
+            // Update DOM (XSS Safe - using textContent)
+            document.getElementById('dash-kpi-projects').textContent = data.summary.total_projects;
+            document.getElementById('dash-kpi-tasks').textContent = data.summary.pending_tasks;
+            document.getElementById('dash-kpi-staff').textContent = data.summary.active_ai_staff;
+            
+            // กราฟ Dashboard
+            renderChart('dashboardLineChart', 'line', ['W1', 'W2', 'W3', 'W4'], [12, 19, 15, 25], 'Tasks Completed');
+            renderChart('dashboardPieChart', 'doughnut', ['To Do', 'Doing', 'Done'], [data.summary.pending_tasks, 2, data.summary.completed_tasks], 'Status', ['#f59e0b', '#3b82f6', '#10b981']);
+            
+            // คำนวณ % Done
+            const total = data.summary.pending_tasks + 2 + data.summary.completed_tasks;
+            const percent = total === 0 ? 0 : Math.round((data.summary.completed_tasks / total) * 100);
+            document.getElementById('chart-center-text').textContent = percent + '%';
+            
+            showToast('อัปเดตข้อมูล', 'โหลดข้อมูล Dashboard ล่าสุดสำเร็จ', 'success');
+        }
+
+        // 6. CHART.JS OPTIMIZATION (Prevent Memory Leak)
+        // =========================================================================
+        function renderChart(canvasId, type, labels, data, labelName, colors = ['#3b82f6']) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+
+            // * สำคัญ: ต้องทำลายกราฟเก่าทิ้งก่อนวาดใหม่ เพื่อป้องกัน Memory Leak
+            if (AppState.charts[canvasId]) {
+                AppState.charts[canvasId].destroy();
+            }
+
+            const chartConfig = {
+                type: type,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: labelName,
+                        data: data,
+                        backgroundColor: colors.length > 1 ? colors : colors[0],
+                        borderColor: type === 'line' || type === 'radar' ? colors[0] : 'transparent',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: type === 'line' ? true : false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: type !== 'line' && type !== 'bar' } }
+                }
+            };
+
+            // สร้างกราฟและเก็บ reference ไว้
+            AppState.charts[canvasId] = new Chart(ctx, chartConfig);
+        }
+
+        function renderAnalyticsCharts() {
+            renderChart('chart-revenue-area', 'line', ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], [1.2, 1.5, 1.4, 1.8, 2.1, 2.4], 'Revenue (M)', ['rgba(16, 185, 129, 0.2)']);
+            renderChart('chart-workflow-bar', 'bar', ['Analyst', 'Designer', 'Writer', 'Manager'], [85, 92, 78, 65], 'Completion %', ['#3b82f6', '#8b5cf6', '#10b981', '#ef4444']);
+            renderChart('chart-ai-radar', 'radar', ['Speed', 'Accuracy', 'Creativity', 'Logic', 'Memory'], [90, 85, 80, 95, 88], 'AI Avg Score', ['rgba(139, 92, 246, 0.5)']);
+            renderChart('chart-status-pie', 'doughnut', ['Active', 'Pending', 'Delayed'], [65, 25, 10], 'Projects', ['#10b981', '#f59e0b', '#ef4444']);
+        }
+
+        // 7. KANBAN & DRAG DROP SYSTEM
+        // =========================================================================
+        async function loadKanbanData() {
+            const result = await apiCall('tasks', { op: 'list' });
+            if (!result) return;
+            // (ในระบบจริงจะนำ result.items มาวนลูปวาดการ์ดลงในแต่ละคอลัมน์)
+        }
+
+        function dragStart(event) {
+            AppState.kanbanDraggedItem = event.target;
+            event.target.classList.add('kanban-ghost');
+            // รองรับ Firefox
+            event.dataTransfer.setData('text/plain', event.target.id);
+            event.dataTransfer.effectAllowed = 'move';
+        }
+
+        function allowDrop(event) {
+            event.preventDefault();
+            const dropzone = event.target.closest('[id^="kanban-"]');
+            if (dropzone) dropzone.classList.add('kanban-drag-over');
+        }
+
+        function dragLeave(event) {
+            const dropzone = event.target.closest('[id^="kanban-"]');
+            if (dropzone) dropzone.classList.remove('kanban-drag-over');
+        }
+
+        function drop(event, newStatus) {
+            event.preventDefault();
+            const dropzone = event.target.closest('[id^="kanban-"]');
+            if (dropzone) {
+                dropzone.classList.remove('kanban-drag-over');
+                if (AppState.kanbanDraggedItem) {
+                    AppState.kanbanDraggedItem.classList.remove('kanban-ghost');
+                    dropzone.appendChild(AppState.kanbanDraggedItem);
+                    
+                    // อัปเดตผ่าน API (สมมติว่า item มี id ผูกติดอยู่)
+                    // apiCall('tasks', { op: 'update', id: item.dataset.id, data: { status: newStatus } });
+                    showToast('อัปเดตงาน', `ย้ายงานไปยัง ${newStatus} แล้ว`, 'success');
+                }
+            }
+        }
+
+        // 8. CHAT ENGINE
+        // =========================================================================
+        async function handleChatSubmit(event) {
+            event.preventDefault();
+            const input = document.getElementById('chat-input-message');
+            const message = input.value.trim();
+            if (!message) return;
+
+            input.value = '';
+            
+            // 1. เพิ่มข้อความผู้ใช้ลงใน UI
+            const chatBox = document.getElementById('chat-messages');
+            chatBox.insertAdjacentHTML('beforeend', `
+                <div class="flex flex-col items-end msg-pop mb-4">
+                    <div class="bg-brand-500 text-white p-3 rounded-2xl rounded-tr-sm shadow-md text-sm">${message.replace(/</g, "&lt;")}</div>
+                </div>
+            `);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // 2. เรียก API
+            const response = await apiCall('chat', {
+                session_id: 'SESSION-001',
+                sender: AppState.currentUser.name,
+                message: message,
+                target_ai_id: 'STF-003' // ตัวอย่าง
+            });
+
+            if (response && response.ai_response) {
+                // 3. เพิ่มข้อความ AI ลงใน UI
+                chatBox.insertAdjacentHTML('beforeend', `
+                    <div class="flex items-start msg-pop mb-4">
+                        <div class="w-8 h-8 rounded-full bg-brand-500 flex-shrink-0 flex items-center justify-center text-white text-xs mr-3"><i class="fa-solid fa-robot"></i></div>
+                        <div class="bg-white dark:bg-slate-800 p-3 rounded-2xl rounded-tl-sm shadow-sm border border-slate-200 dark:border-slate-700 text-sm">
+                            ${response.ai_response}
+                        </div>
+                    </div>
+                `);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        }
+
+        // 9. GENERIC TABLE & MODAL (CRUD Operations)
+        // =========================================================================
+        async function fetchGenericData(sheetName) {
+            const data = await apiCall(sheetName, { op: 'list', limit: 50 });
+            if (!data) return;
+            
+            // สร้าง Header
+            const thead = document.getElementById('generic-thead');
+            const tbody = document.getElementById('generic-tbody');
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+
+            if (data.items.length > 0) {
+                const keys = Object.keys(data.items[0]).filter(k => k !== 'created_at' && k !== 'id');
+                
+                let trHead = '<tr class="text-xs uppercase text-slate-500 dark:text-slate-400 border-b border-slate-200/50 dark:border-slate-700/50">';
+                keys.forEach(k => trHead += `<th class="px-6 py-4 font-semibold">${k}</th>`);
+                trHead += '<th class="px-6 py-4 font-semibold text-right">Action</th></tr>';
+                thead.innerHTML = trHead;
+
+                data.items.forEach(item => {
+                    let trBody = '<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">';
+                    keys.forEach(k => {
+                        let val = item[k];
+                        // กำหนดสีสถานะเบื้องต้น
+                        if (val === 'Done' || val === 'Active') val = `<span class="bg-emerald-100 text-emerald-600 px-2 py-1 rounded text-xs">${val}</span>`;
+                        if (val === 'In Progress') val = `<span class="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs">${val}</span>`;
+                        trBody += `<td class="px-6 py-4">${val}</td>`;
+                    });
+                    trBody += `<td class="px-6 py-4 text-right">
+                        <button onclick="deleteRecord('${sheetName}', '${item.id}')" class="text-red-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button>
+                    </td></tr>`;
+                    tbody.innerHTML += trBody;
+                });
+            }
+            
+            // เปลี่ยน Title
+            document.getElementById('generic-title').textContent = sheetName.toUpperCase();
+            navigate('generic');
+        }
+
+        async function deleteRecord(sheetName, id) {
+            if (confirm('ยืนยันการลบข้อมูล?')) {
+                showGlobalLoading(true);
+                const res = await apiCall(sheetName, { op: 'delete', id: id });
+                showGlobalLoading(false);
+                if (res) fetchGenericData(sheetName);
+            }
+        }
+
+        function openModal(type, action) {
+            const modal = document.getElementById('global-modal');
+            const title = document.getElementById('modal-title');
+            const body = document.getElementById('modal-body');
+            
+            title.textContent = `${action === 'create' ? 'สร้าง' : 'แก้ไข'}ข้อมูล ${type}`;
+            
+            // จำลองการ Render Form ตาม Type
+            body.innerHTML = `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">ชื่อ / หัวข้อ</label>
+                        <input type="text" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">รายละเอียด</label>
+                        <textarea rows="3" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2 focus:ring-2 focus:ring-brand-500 outline-none"></textarea>
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('global-modal').classList.add('hidden');
+        }
+
+        // 10. GLOBAL UTILITIES (Search, Theme, Toast, Loader)
+        // =========================================================================
+        function showToast(title, message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const id = 'toast-' + Date.now();
+            
+            let color = 'bg-blue-500';
+            let icon = 'fa-circle-info';
+            if (type === 'success') { color = 'bg-emerald-500'; icon = 'fa-circle-check'; }
+            if (type === 'error') { color = 'bg-red-500'; icon = 'fa-triangle-exclamation'; }
+
+            const toast = document.createElement('div');
+            toast.id = id;
+            toast.className = `glass-card p-4 rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 w-80 transform transition-all translate-y-10 opacity-0 bg-white/90 dark:bg-slate-800/90 pointer-events-auto flex items-start`;
+            toast.innerHTML = `
+                <div class="${color} text-white w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mr-3">
+                    <i class="fa-solid ${icon}"></i>
+                </div>
+                <div class="flex-1">
+                    <h4 class="font-bold text-sm text-slate-800 dark:text-slate-200">${title}</h4>
+                    <p class="text-xs text-slate-500 mt-1">${message}</p>
+                </div>
+                <button onclick="document.getElementById('${id}').remove()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Animation
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-10', 'opacity-0');
+            });
+
+            // Auto remove
+            setTimeout(() => {
+                if (document.getElementById(id)) {
+                    toast.classList.add('opacity-0', 'scale-95');
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, 4000);
+        }
+
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const isDark = html.classList.contains('dark');
+            applyTheme(isDark ? 'light' : 'dark');
+        }
+
+        function applyTheme(theme) {
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            if (theme === 'dark') {
+                html.classList.add('dark');
+                icon.className = 'fa-solid fa-moon text-yellow-400';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                icon.className = 'fa-solid fa-sun text-slate-600';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            if (overlay.classList.contains('hidden')) {
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            } else {
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            }
+        }
+
+        function showGlobalLoading(show) {
+            const loader = document.getElementById('global-loader');
+            if (show) {
+                loader.classList.remove('hidden');
+                setTimeout(() => loader.style.opacity = '1', 10);
+            } else {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.classList.add('hidden'), 300);
+            }
+        }
+
+        // Debounce สำหรับการค้นหา เพื่อประหยัดการเรียก API (Performance Optimization)
+        function debounceSearch(type) {
+            clearTimeout(AppState.searchTimeout);
+            AppState.searchTimeout = setTimeout(() => {
+                const keyword = document.getElementById(`search-${type}`).value;
+                showToast('กำลังค้นหา...', keyword, 'info');
+                // apiCall(type, { op: 'list', search: keyword }).then(...)
+            }, 600);
+        }
+
+        function openAIDetail(id) {
+            navigate('ai_detail');
+        }
+        function logout() {
+            AppState.currentUser = null;
+            showToast('ออกจากระบบ', 'กรุณาล็อกอินใหม่', 'info');
+        }
+    </script>
+</body>
+</html>
+
